@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Llanos Core - Cyber-Register</title>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+    <style>
+        :root {
+            --neon-emerald: #10b981;
+            --glass-bg: rgba(15, 23, 42, 0.7);
+            --border: rgba(16, 185, 129, 0.3);
+        }
+        body {
+            background: linear-gradient(135deg, #020617 0%, #0f172a 100%);
+            color: #f8fafc;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0;
+            padding: 20px;
+        }
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 30px;
+            width: 100%; max-width: 450px;
+            box-shadow: 0 0 30px rgba(16, 185, 129, 0.1);
+        }
+        h1 { color: var(--neon-emerald); text-align: center; text-transform: uppercase; letter-spacing: 2px; margin-top: 0; }
+        .input-group { margin-bottom: 15px; }
+        label { display: block; font-size: 12px; color: var(--neon-emerald); margin-bottom: 5px; font-weight: bold; }
+        input, textarea {
+            width: 100%; background: rgba(0,0,0,0.3); border: 1px solid var(--border);
+            border-radius: 8px; padding: 12px; color: white; outline: none; transition: 0.3s;
+            font-size: 16px;
+        }
+        input:focus, textarea:focus { border-color: var(--neon-emerald); box-shadow: 0 0 10px var(--border); }
+        .btn-neon {
+            width: 100%; background: transparent; border: 1px solid var(--neon-emerald);
+            color: var(--neon-emerald); padding: 14px; border-radius: 8px; cursor: pointer;
+            font-weight: bold; text-transform: uppercase; transition: 0.3s; font-size: 14px;
+        }
+        .btn-neon:hover { background: var(--neon-emerald); color: #000; box-shadow: 0 0 20px var(--neon-emerald); }
+        .btn-neon:disabled { opacity: 0.5; cursor: not-allowed; }
+        #result { display: none; text-align: center; }
+        #qrcode { margin: 20px auto; border: 8px solid white; border-radius: 12px; max-width: 200px; }
+    </style>
+</head>
+<body>
+    <div class="glass-card" id="form-container">
+        <h1>Llanos Core</h1>
+        <div class="input-group">
+            <label>CLIENTE / RAZÓN SOCIAL</label>
+            <input type="text" id="nombre" placeholder="Nombre completo" required>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div class="input-group"><label>CÉDULA / RIF</label><input type="text" id="ci" placeholder="V-12345678" required></div>
+            <div class="input-group"><label>TELÉFONO</label><input type="text" id="telefono" placeholder="0412..." required></div>
+        </div>
+        <div class="input-group"><label>EQUIPO / MARCA / MODELO</label><input type="text" id="equipo" placeholder="Ej: Laptop HP Pavilion" required></div>
+        <div class="input-group"><label>SERIAL</label><input type="text" id="serial" placeholder="Opcional"></div>
+        <div class="input-group"><label>FALLA / REQUERIMIENTO</label><textarea id="falla" rows="3" placeholder="Describe el problema..." required></textarea></div>
+        <button class="btn-neon" id="submit-btn" onclick="registrar()">Sincronizar con Técnico</button>
+    </div>
+
+    <div class="glass-card" id="result">
+        <h2 style="color: var(--neon-emerald)">¡REGISTRO EXITOSO!</h2>
+        <p style="font-size: 14px; color: #94a3b8;">Tu solicitud ha sido enviada al sistema central.</p>
+        <canvas id="qrcode"></canvas>
+        <p style="font-size: 13px;">Muestra este código QR al ingresar al local.</p>
+        <button class="btn-neon" onclick="location.reload()">Nuevo Registro</button>
+    </div>
+
+    <script>
+        const FIREBASE_URL = "https://llanos-core-gestion-docmentos-default-rtdb.firebaseio.com/registros.json";
+
+        async function registrar() {
+            const btn = document.getElementById('submit-btn');
+            const data = {
+                nombre: document.getElementById('nombre').value.trim(),
+                ci: document.getElementById('ci').value.trim(),
+                telefono: document.getElementById('telefono').value.trim(),
+                equipo: document.getElementById('equipo').value.trim(),
+                serial: document.getElementById('serial').value.trim() || 'S/N',
+                falla: document.getElementById('falla').value.trim(),
+                fecha: new Date().toLocaleString()
+            };
+
+            // Validación rigurosa
+            if(!data.nombre || !data.ci || !data.telefono || !data.equipo || !data.falla) {
+                alert("⚠️ Por favor rellena todos los campos obligatorios.");
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerText = "SINCRONIZANDO...";
+
+            try {
+                const response = await fetch(FIREBASE_URL, {
+                    method: 'POST',
+                    body: JSON.stringify(data),
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const result = await response.json();
+                
+                if (result && result.name) {
+                    // Mostrar QR con el ID único de Firebase
+                    document.getElementById('form-container').style.display = 'none';
+                    document.getElementById('result').style.display = 'block';
+                    QRCode.toCanvas(document.getElementById('qrcode'), result.name, { width: 200 });
+                } else {
+                    throw new Error("No se recibió ID de confirmación");
+                }
+                
+            } catch (error) {
+                console.error(error);
+                alert("❌ Error de conexión. Revisa tu internet e intenta nuevamente.");
+                btn.disabled = false;
+                btn.innerText = "Sincronizar con Técnico";
+            }
+        }
+    </script>
+</body>
+</html>
