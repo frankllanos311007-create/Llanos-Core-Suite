@@ -97,7 +97,7 @@ class ReportesPCWidget(QWidget):
         # ── Title row
         title_row = QHBoxLayout()
         lbl = QLabel("🖥️  Nuevo Reporte de PC")
-        lbl.setStyleSheet("color:#e2e8f0;font-size:19px;font-weight:bold;")
+        lbl.setStyleSheet("color:#F0F6FC;font-size:19px;font-weight:bold;")
         title_row.addWidget(lbl)
         title_row.addStretch()
         btn_new = QPushButton("＋ Nuevo")
@@ -120,7 +120,7 @@ class ReportesPCWidget(QWidget):
 
         sep = QFrame()
         sep.setFrameShape(QFrame.Shape.HLine)
-        sep.setStyleSheet("background:#1e293b;max-height:1px;")
+        sep.setStyleSheet("background:#30363D;max-height:1px;")
         lay.addWidget(sep)
 
         # ── Document info
@@ -142,6 +142,7 @@ class ReportesPCWidget(QWidget):
         grp_cli, lay_cli = self._create_card("Datos del Cliente")
         row_cli = QHBoxLayout()
         self.txt_cliente  = QLineEdit(); self.txt_cliente.setPlaceholderText("Nombre completo...")
+        self.txt_cliente.returnPressed.connect(self._lookup_client_by_name)
         self.txt_telefono = QLineEdit(); self.txt_telefono.setPlaceholderText("Teléfono (Opcional)")
         self.txt_ci       = QLineEdit(); self.txt_ci.setPlaceholderText("Ej: V-12.345.678")
         self.txt_ci.editingFinished.connect(self._lookup_client)
@@ -149,17 +150,6 @@ class ReportesPCWidget(QWidget):
         row_cli.addWidget(self.txt_telefono)
         row_cli.addWidget(self.txt_ci)
         lay_cli.addLayout(row_cli)
-        
-        
-        btn_send_form = QPushButton("📲 Enviar Formulario")
-        btn_send_form.setToolTip("Enviar link de registro al cliente por WhatsApp")
-        btn_send_form.setStyleSheet("color: #34d399; font-weight: bold; border: 1px dashed #10b981; padding: 6px; border-radius: 6px;")
-        btn_send_form.setCursor(Qt.CursorShape.PointingHandCursor)
-        btn_send_form.clicked.connect(self._send_registration_form)
-        
-        row_reg = QHBoxLayout()
-        row_reg.addWidget(btn_send_form)
-        lay_cli.addLayout(row_reg)
         
         lay.addWidget(grp_cli)
 
@@ -367,6 +357,23 @@ class ReportesPCWidget(QWidget):
             QMessageBox.information(self, "Carga Exitosa", "Se han cargado los datos del cliente y su equipo.")
         except Exception as e:
             QMessageBox.critical(self, "Error", "El código no es válido o está incompleto.")
+
+    def _lookup_client_by_name(self):
+        nombre = self.txt_cliente.text().strip()
+        if not nombre or len(nombre) < 3: return
+        cloud = database.search_cloud_registration(nombre)
+        if cloud:
+            self.txt_cliente.setText(cloud['nombre'])
+            self.txt_telefono.setText(cloud['telefono'])
+            self.txt_ci.setText(cloud['ci'])
+            self.txt_marca.setText(cloud.get('equipo', ''))
+            self.txt_serial.setText(cloud.get('serial', ''))
+            self.txt_diag.setPlainText(f"FALLA REPORTADA POR CLIENTE: {cloud.get('falla', '')}")
+            return
+        client = database.get_cliente_by_name(nombre)
+        if client:
+            self.txt_ci.setText(client['ci'])
+            self.txt_telefono.setText(client['telefono'])
 
     def _lookup_client(self):
         ci = self.txt_ci.text().strip()

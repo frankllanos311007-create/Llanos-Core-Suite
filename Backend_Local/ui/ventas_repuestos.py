@@ -84,7 +84,7 @@ class VentasRepuestosWidget(QWidget):
         # ── Title row
         title_row = QHBoxLayout()
         lbl = QLabel("🛒  Nueva Venta de Repuestos")
-        lbl.setStyleSheet("color:#e2e8f0;font-size:19px;font-weight:bold;")
+        lbl.setStyleSheet("color:#F0F6FC;font-size:19px;font-weight:bold;")
         title_row.addWidget(lbl)
         title_row.addStretch()
         btn_new = QPushButton("＋ Nueva")
@@ -107,7 +107,7 @@ class VentasRepuestosWidget(QWidget):
 
         sep = QFrame()
         sep.setFrameShape(QFrame.Shape.HLine)
-        sep.setStyleSheet("background:#1e293b;max-height:1px;")
+        sep.setStyleSheet("background:#30363D;max-height:1px;")
         lay.addWidget(sep)
 
         # ── Document info
@@ -129,6 +129,7 @@ class VentasRepuestosWidget(QWidget):
         grp_cli, lay_cli = self._create_card("Datos del Cliente")
         row_cli = QHBoxLayout()
         self.txt_cliente  = QLineEdit(); self.txt_cliente.setPlaceholderText("Nombre completo...")
+        self.txt_cliente.returnPressed.connect(self._lookup_client_by_name)
         self.txt_telefono = QLineEdit(); self.txt_telefono.setPlaceholderText("Teléfono (Opcional)")
         self.txt_ci       = QLineEdit(); self.txt_ci.setPlaceholderText("Ej: V-12.345.678")
         self.txt_ci.editingFinished.connect(self._lookup_client)
@@ -137,15 +138,7 @@ class VentasRepuestosWidget(QWidget):
         row_cli.addWidget(self.txt_ci)
         lay_cli.addLayout(row_cli)
         
-        btn_send_form = QPushButton("📲 Enviar Formulario")
-        btn_send_form.setToolTip("Enviar link de registro al cliente por WhatsApp")
-        btn_send_form.setStyleSheet("color: #34d399; font-weight: bold; border: 1px dashed #10b981; padding: 6px; border-radius: 6px;")
-        btn_send_form.setCursor(Qt.CursorShape.PointingHandCursor)
-        btn_send_form.clicked.connect(self._send_registration_form)
-        
-        row_reg = QHBoxLayout()
-        row_reg.addWidget(btn_send_form)
-        lay_cli.addLayout(row_reg)
+        lay_cli.addLayout(row_cli)
         lay.addWidget(grp_cli)
 
         # ── Especificaciones Técnicas (The user's requested block)
@@ -386,6 +379,23 @@ class VentasRepuestosWidget(QWidget):
         if QMessageBox.question(self, "Confirmar", f"¿Eliminar {numero}?") == QMessageBox.StandardButton.Yes:
             database.delete_venta(nota_id); self._refresh_history()
             if self._saved_id == nota_id: self._new_venta()
+
+    def _lookup_client_by_name(self):
+        nombre = self.txt_cliente.text().strip()
+        if not nombre or len(nombre) < 3: return
+        cloud = database.search_cloud_registration(nombre)
+        if cloud:
+            self.txt_cliente.setText(cloud['nombre'])
+            self.txt_telefono.setText(cloud['telefono'])
+            self.txt_ci.setText(cloud['ci'])
+            self.txt_marca.setText(cloud.get('equipo', ''))
+            self.txt_serial.setText(cloud.get('serial', ''))
+            self.txt_obs.setPlainText(f"REPORTE DEL CLIENTE: {cloud.get('falla', '')}")
+            return
+        client = database.get_cliente_by_name(nombre)
+        if client:
+            self.txt_ci.setText(client['ci'])
+            self.txt_telefono.setText(client['telefono'])
 
     def _lookup_client(self):
         ci = self.txt_ci.text().strip()

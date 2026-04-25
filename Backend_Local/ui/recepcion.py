@@ -5,63 +5,90 @@ from PyQt6.QtCore import Qt, QTimer
 import database
 
 class DetalleRegistroDialog(QDialog):
-    """Ventana modal para ver los detalles completos de un registro."""
+    """Ventana modal rediseñada con estilo SaaS Moderno."""
     def __init__(self, data, parent=None):
         super().__init__(parent)
-        self.setWindowTitle(f"Detalles de Recepción - {data['nombre']}")
-        self.setMinimumSize(500, 550)
-        self.setStyleSheet("background-color: #0f172a; color: #f8fafc;")
+        self.setWindowTitle(f"Ficha de Cliente - {data['nombre']}")
+        self.setMinimumSize(500, 580)
+        self.setStyleSheet("background-color: #0B0E14; color: #F0F6FC;")
         
         lay = QVBoxLayout(self)
-        lay.setContentsMargins(25, 25, 25, 25)
-        lay.setSpacing(15)
+        lay.setContentsMargins(30, 30, 30, 30)
+        lay.setSpacing(18)
         
-        title = QLabel("📄 Ficha de Recepción")
-        title.setStyleSheet("font-size: 20px; font-weight: bold; color: #10b981;")
+        title = QLabel("📄 Ficha Técnica de Recepción")
+        title.setStyleSheet("font-size: 20px; font-weight: bold; color: #58A6FF;")
         lay.addWidget(title)
         
         # Info Card
         info_frame = QFrame()
-        info_frame.setStyleSheet("background: #1e293b; border-radius: 10px; padding: 15px;")
+        info_frame.setObjectName("card")
+        info_frame.setStyleSheet("""
+            QFrame#card {
+                background: #161B22; 
+                border-radius: 12px; 
+                border: 1px solid #30363D;
+                padding: 15px;
+            }
+        """)
         info_lay = QVBoxLayout(info_frame)
+        info_lay.setSpacing(10)
         
         def add_field(label, value):
-            lbl = QLabel(f"<b>{label}:</b> {value}")
-            lbl.setStyleSheet("font-size: 14px; color: #e2e8f0; border: none;")
-            lbl.setWordWrap(True)
-            info_lay.addWidget(lbl)
+            container = QWidget()
+            h_lay = QHBoxLayout(container)
+            h_lay.setContentsMargins(0,0,0,0)
             
-        add_field("Cliente", data['nombre'])
-        add_field("Cédula/RIF", data['ci'])
-        add_field("Teléfono", data['telefono'])
-        add_field("Fecha", data['fecha'])
-        add_field("Equipo", data['equipo'])
-        add_field("Serial", data.get('serial', 'S/N'))
+            lbl_key = QLabel(f"{label}:")
+            lbl_key.setStyleSheet("color: #8B949E; font-weight: bold; font-size: 13px; border:none;")
+            lbl_key.setFixedWidth(100)
+            
+            lbl_val = QLabel(str(value))
+            lbl_val.setStyleSheet("color: #F0F6FC; font-size: 14px; border:none;")
+            lbl_val.setWordWrap(True)
+            
+            h_lay.addWidget(lbl_key)
+            h_lay.addWidget(lbl_val, 1)
+            info_lay.addWidget(container)
+            
+        add_field("CLIENTE", data['nombre'])
+        add_field("CÉDULA", data['ci'])
+        add_field("TELÉFONO", data['telefono'])
+        add_field("FECHA", data['fecha'])
+        add_field("EQUIPO", data['equipo'])
+        add_field("SERIAL", data.get('serial', 'No especificado'))
         
         lay.addWidget(info_frame)
         
         # Falla / Motivo
-        lay.addWidget(QLabel("<b>MOTIVO / FALLA REPORTADA:</b>"))
+        lbl_motivo = QLabel("MOTIVO / FALLA REPORTADA")
+        lbl_motivo.setStyleSheet("color: #8B949E; font-size: 11px; font-weight: bold; letter-spacing: 1px;")
+        lay.addWidget(lbl_motivo)
+        
         self.txt_falla = QTextEdit()
         self.txt_falla.setReadOnly(True)
         self.txt_falla.setPlainText(data['falla'])
         self.txt_falla.setStyleSheet("""
             QTextEdit {
-                background-color: #000; border: 1px solid #334155;
-                border-radius: 8px; padding: 15px; font-size: 15px; color: #10b981;
+                background-color: #0D1117; 
+                border: 1px solid #30363D;
+                border-radius: 8px; 
+                padding: 15px; 
+                font-size: 14px; 
+                color: #3FB950;
             }
         """)
         lay.addWidget(self.txt_falla)
         
-        btn_close = QPushButton("Cerrar")
+        btn_close = QPushButton("Entendido")
         btn_close.clicked.connect(self.close)
         btn_close.setCursor(Qt.CursorShape.PointingHandCursor)
         btn_close.setStyleSheet("""
             QPushButton {
-                background: #334155; color: white; border: none;
+                background: #21262D; color: #C9D1D9; border: 1px solid #363B42;
                 padding: 12px; border-radius: 8px; font-weight: bold;
             }
-            QPushButton:hover { background: #475569; }
+            QPushButton:hover { background: #30363D; color: #F0F6FC; }
         """)
         lay.addWidget(btn_close)
 
@@ -70,9 +97,8 @@ class RecepcionWidget(QWidget):
         super().__init__()
         self._setup_ui()
         
-        # Timer de sincronización automática
         self.refresh_timer = QTimer()
-        self.refresh_timer.setInterval(10000) # Cada 10 segundos
+        self.refresh_timer.setInterval(10000) 
         self.refresh_timer.timeout.connect(self._auto_sync)
         self.refresh_timer.start()
         
@@ -80,54 +106,48 @@ class RecepcionWidget(QWidget):
 
     def _setup_ui(self):
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(30, 30, 30, 30)
-        layout.setSpacing(20)
+        layout.setContentsMargins(40, 40, 40, 40)
+        layout.setSpacing(25)
 
         # Header
         hdr = QHBoxLayout()
-        self.lbl_title = QLabel("📥 Recepción de Equipos (Nube)")
-        self.lbl_title.setStyleSheet("color: #e2e8f0; font-size: 24px; font-weight: bold;")
+        self.lbl_title = QLabel("📥 Recepción de Equipos Cloud")
+        self.lbl_title.setStyleSheet("color: #F0F6FC; font-size: 26px; font-weight: bold; letter-spacing: -0.5px;")
         hdr.addWidget(self.lbl_title)
         hdr.addStretch()
         
-        btn_sync = QPushButton("🔄 Sincronizar Ahora")
+        btn_sync = QPushButton("🔄 Sincronizar")
         btn_sync.setCursor(Qt.CursorShape.PointingHandCursor)
         btn_sync.clicked.connect(self._sync_now)
         btn_sync.setStyleSheet("""
             QPushButton {
-                background: #334155; color: white; border: none;
-                padding: 10px 20px; border-radius: 8px; font-weight: bold;
+                background: #238636; color: white; border: 1px solid #2ea043;
+                padding: 10px 24px; border-radius: 8px; font-weight: bold; font-size: 13px;
             }
-            QPushButton:hover { background: #475569; }
+            QPushButton:hover { background: #2ea043; }
         """)
         hdr.addWidget(btn_sync)
         layout.addLayout(hdr)
 
-        # Table
+        # Modern Table
         self.table = QTableWidget()
         self.table.setColumnCount(5)
-        self.table.setHorizontalHeaderLabels(["Fecha", "Cliente", "Cédula", "Equipo", "Falla / Motivo"])
+        self.table.setHorizontalHeaderLabels(["FECHA", "CLIENTE", "CÉDULA", "EQUIPO", "ESTADO / FALLA"])
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
-        self.table.setStyleSheet("""
-            QTableWidget {
-                background-color: #1e293b; color: #f8fafc;
-                gridline-color: #334155; border: 1px solid #334155;
-                border-radius: 12px; font-size: 14px;
-            }
-            QHeaderView::section {
-                background-color: #0f172a; color: #94a3b8;
-                padding: 12px; border: none; font-weight: bold;
-            }
-        """)
+        
+        # Aplicamos el estilo SaaS a la tabla
         self.table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self.table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        self.table.setAlternatingRowColors(True)
+        self.table.setShowGrid(False) # Quita las líneas de rejilla
         self.table.itemDoubleClicked.connect(self._show_details)
+        
         layout.addWidget(self.table)
 
         # Hint
-        lbl_hint = QLabel("💡 Haz doble clic en una fila para ver todos los detalles del equipo.")
-        lbl_hint.setStyleSheet("color: #64748b; font-size: 13px; font-style: italic;")
+        lbl_hint = QLabel("💡 Doble clic para ver la ficha técnica completa del equipo.")
+        lbl_hint.setStyleSheet("color: #484F58; font-size: 13px; font-style: italic;")
         layout.addWidget(lbl_hint)
 
     def _refresh_table(self):
@@ -135,39 +155,38 @@ class RecepcionWidget(QWidget):
         self.table.setRowCount(len(self.registros))
         
         for row, reg in enumerate(self.registros):
-            self.table.setItem(row, 0, QTableWidgetItem(reg['fecha']))
-            self.table.setItem(row, 1, QTableWidgetItem(reg['nombre']))
-            self.table.setItem(row, 2, QTableWidgetItem(reg['ci']))
-            self.table.setItem(row, 3, QTableWidgetItem(reg['equipo']))
+            # Formatear items con estilo
+            f_item = QTableWidgetItem(reg['fecha'])
+            n_item = QTableWidgetItem(reg['nombre'])
+            c_item = QTableWidgetItem(reg['ci'])
+            e_item = QTableWidgetItem(reg['equipo'])
             
-            falla_item = QTableWidgetItem(reg['falla'])
-            falla_item.setToolTip("Doble clic para ver detalle completo")
-            self.table.setItem(row, 4, falla_item)
+            falla_txt = reg['falla']
+            if len(falla_txt) > 50: falla_txt = falla_txt[:47] + "..."
+            fa_item = QTableWidgetItem(falla_txt)
+            fa_item.setForeground(Qt.GlobalColor.gray)
+            
+            self.table.setItem(row, 0, f_item)
+            self.table.setItem(row, 1, n_item)
+            self.table.setItem(row, 2, c_item)
+            self.table.setItem(row, 3, e_item)
+            self.table.setItem(row, 4, fa_item)
 
     def _auto_sync(self):
-        """Sincroniza en segundo plano y avisa si hay novedades."""
         count = database.sincronizar_nube()
         if count > 0:
             self._refresh_table()
-            # Aviso visual en el título
-            self.lbl_title.setText(f"📥 ¡NUEVO REGISTRO RECIBIDO! (+{count})")
-            self.lbl_title.setStyleSheet("color: #10b981; font-size: 24px; font-weight: bold;")
-            
-            # Notificación tipo Toast (opcional, usamos un message box para que no se le pase al usuario)
-            msg = QMessageBox(self)
-            msg.setWindowTitle("Llanos Core - Notificación")
-            msg.setText(f"🔔 Se han recibido {count} nuevo(s) registro(s) de clientes desde la nube.")
-            msg.setIcon(QMessageBox.Icon.Information)
-            msg.show()
+            self.lbl_title.setText(f"📥 ¡NUEVOS EQUIPOS! (+{count})")
+            self.lbl_title.setStyleSheet("color: #3FB950; font-size: 26px; font-weight: bold;")
             QTimer.singleShot(5000, self._reset_title)
 
     def _sync_now(self):
         count = database.sincronizar_nube()
         self._refresh_table()
         if count > 0:
-            QMessageBox.information(self, "Sincronización", f"Se importaron {count} nuevos registros.")
+            QMessageBox.information(self, "Cloud Sync", f"Se han importado {count} nuevos equipos con éxito.")
         else:
-            QMessageBox.information(self, "Sincronización", "No hay registros nuevos en la nube.")
+            QMessageBox.information(self, "Cloud Sync", "El sistema está actualizado. No hay nuevos registros.")
 
     def _show_details(self, item):
         row = item.row()
@@ -177,5 +196,5 @@ class RecepcionWidget(QWidget):
             dlg.exec()
 
     def _reset_title(self):
-        self.lbl_title.setText("📥 Recepción de Equipos (Nube)")
-        self.lbl_title.setStyleSheet("color: #e2e8f0; font-size: 24px; font-weight: bold;")
+        self.lbl_title.setText("📥 Recepción de Equipos Cloud")
+        self.lbl_title.setStyleSheet("color: #F0F6FC; font-size: 26px; font-weight: bold;")

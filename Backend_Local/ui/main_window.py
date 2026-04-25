@@ -2,7 +2,8 @@ from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QHBoxLayout, QVBoxLayout,
     QPushButton, QLabel, QStackedWidget, QStatusBar, QFrame,
 )
-from PyQt6.QtCore import Qt, QPropertyAnimation, QEasingCurve
+from PyQt6.QtCore import Qt, QPropertyAnimation, QEasingCurve, QTimer
+from PyQt6.QtGui import QIcon
 
 from ui.notas_entrega import NotasEntregaWidget
 from ui.reportes_pc import ReportesPCWidget
@@ -20,9 +21,12 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Llanos Core — Gestión de Documentos")
-        self.setMinimumSize(1100, 700)
-        self.resize(1280, 800)
+        self.setWindowTitle("Llanos Core — Gestión SaaS")
+        self.setMinimumSize(1100, 750)
+        self.resize(1300, 850)
+        
+        # Icono del sistema
+        self.setWindowIcon(self.style().standardIcon(self.style().StandardPixmap.SP_ComputerIcon))
 
         central = QWidget()
         self.setCentralWidget(central)
@@ -31,8 +35,16 @@ class MainWindow(QMainWindow):
         root.setContentsMargins(0, 0, 0, 0)
         root.setSpacing(0)
 
-        # Sidebar
-        root.addWidget(self._build_sidebar())
+        # ── SIDEBAR CONTAINER (Para efecto flotante)
+        self.sidebar_container = QWidget()
+        self.sidebar_container.setFixedWidth(0) # Iniciar CERRADA al 100%
+        self.sidebar_lay = QVBoxLayout(self.sidebar_container)
+        self.sidebar_lay.setContentsMargins(0, 0, 0, 0) # Sin márgenes al estar cerrada
+        
+        self.sidebar = self._build_sidebar()
+        self.sidebar_lay.addWidget(self.sidebar)
+        
+        root.addWidget(self.sidebar_container)
 
         # Right panel (topbar + content)
         right = QWidget()
@@ -66,87 +78,78 @@ class MainWindow(QMainWindow):
 
         # Status bar
         sb = QStatusBar()
-        sb.showMessage("⚡ Llanos Core  •  Sistema de Gestión Premium  •  Listo")
+        sb.showMessage("⚡ Llanos Core  •  Enterprise SaaS Edition  •  Ready")
         self.setStatusBar(sb)
 
         self._navigate(0) # Iniciar en formulario de notas
+        self.showMaximized()
+
+    def closeEvent(self, event):
+        """Asegura que el proceso se cierre completamente."""
+        import sys
+        sys.exit(0)
 
     # ── TOP BAR ───────────────────────────────────────────────────────────────
 
     def _build_topbar(self) -> QWidget:
         bar = QWidget()
-        bar.setFixedHeight(56)
+        bar.setFixedHeight(65) # Un poco más alto para elegancia
         bar.setStyleSheet(
             "QWidget{"
-            "background-color: #202020;"
-            "border-bottom: 1px solid #323232;}"
+            "background-color: transparent;"
+            "border-bottom: 1px solid #21262D;}"
         )
         lay = QHBoxLayout(bar)
-        lay.setContentsMargins(18, 0, 22, 0)
+        lay.setContentsMargins(25, 0, 30, 0)
         lay.setSpacing(16)
 
-        self.btn_toggle = QPushButton("☰")
-        self.btn_toggle.setFixedSize(36, 36)
+        self.btn_toggle = QPushButton("\uE700") # Icono oficial de Windows 11 (Burger)
+        self.btn_toggle.setFixedSize(42, 42)
         self.btn_toggle.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_toggle.setStyleSheet(
-            "QPushButton { background: transparent; border: none; color: #A0A0A0; font-size: 20px; border-radius: 6px; padding: 0; }"
-            "QPushButton:hover { background: #2D2D2D; color: #FFFFFF; }"
+            "QPushButton { background: #161B22; border: 1px solid #30363D; color: #F0F6FC; font-family: 'Segoe MDL2 Assets'; font-size: 16px; border-radius: 10px; }"
+            "QPushButton:hover { background: #21262D; border-color: #58A6FF; color: #58A6FF; }"
         )
         self.btn_toggle.clicked.connect(self.toggle_sidebar)
         lay.addWidget(self.btn_toggle)
 
         self.topbar_title = QLabel("📦  Notas de Entrega")
         self.topbar_title.setStyleSheet(
-            "color:#F8FAFC;font-size:16px;font-weight:bold;"
-            "letter-spacing:0.5px;background:transparent;border:none;"
+            "color:#F0F6FC;font-size:18px;font-weight:600;letter-spacing:-0.5px;"
         )
+        lay.addWidget(self.topbar_title)
         lay.addStretch()
-
-        lay.addStretch()
-
-        hint = QLabel("👁 Vista Previa   │   💾 Guardar   │   🖨️ Imprimir   │   📄 PDF")
-        hint.setStyleSheet(
-            "color: #4A5568; font-size: 11px; background: transparent; border: none;"
-        )
-        lay.addWidget(hint)
 
         return bar
 
     # ── SIDEBAR ───────────────────────────────────────────────────────────────
 
     def _build_sidebar(self) -> QWidget:
-        self.sidebar = QWidget()
-        self.sidebar.setObjectName("sidebar")
-        self.sidebar.setFixedWidth(240)
-        self.sidebar.setStyleSheet(SIDEBAR_STYLE)
+        sidebar = QWidget()
+        sidebar.setObjectName("sidebar")
+        sidebar.setStyleSheet(SIDEBAR_STYLE)
 
-        lay = QVBoxLayout(self.sidebar)
-        lay.setContentsMargins(0, 0, 0, 0)
+        lay = QVBoxLayout(sidebar)
+        lay.setContentsMargins(0, 10, 0, 10)
         lay.setSpacing(0)
 
         # ── Logo block
         self.logo_block = QWidget()
-        self.logo_block.setFixedHeight(85)
-        self.logo_block.setStyleSheet(
-            "QWidget{"
-            "background-color: #202020;"
-            "border-bottom: 1px solid #323232;}"
-        )
+        self.logo_block.setFixedHeight(100)
         lb = QVBoxLayout(self.logo_block)
-        lb.setContentsMargins(20, 16, 20, 16)
-        lb.setSpacing(4)
+        lb.setContentsMargins(25, 20, 25, 20)
+        lb.setSpacing(2)
 
         self.lbl_logo = QLabel("⚡ LLANOS CORE")
         self.lbl_logo.setStyleSheet(
-            "color: #10B981; font-size: 18px; font-weight: bold;"
+            "color: #58A6FF; font-size: 18px; font-weight: bold;"
             "letter-spacing: 1px; background: transparent; border: none;"
         )
         lb.addWidget(self.lbl_logo)
 
-        self.lbl_sub = QLabel("Gestión de Documentos")
+        self.lbl_sub = QLabel("Premium Document System")
         self.lbl_sub.setStyleSheet(
-            "color:#A0A0A0;font-size:10px;letter-spacing:1px;"
-            "background:transparent;border:none;font-weight:bold;"
+            "color:#484F58;font-size:10px;font-weight:bold;letter-spacing:0.5px;"
         )
         lb.addWidget(self.lbl_sub)
         lay.addWidget(self.logo_block)
@@ -154,21 +157,19 @@ class MainWindow(QMainWindow):
         # ── Section label
         self.sec_lbl1 = QLabel("MÓDULOS")
         self.sec_lbl1.setStyleSheet(
-            "color: #A0A0A0; font-size: 10px; font-weight: bold; letter-spacing: 1.5px;"
-            "padding: 16px 20px 8px; background: transparent; border: none;"
+            "color: #484F58; font-size: 10px; font-weight: bold; letter-spacing: 2px; padding: 15px 25px 8px;"
         )
         lay.addWidget(self.sec_lbl1)
 
         # ── Navigation buttons
         nav_items = [
-            # label, module_idx, sub_view (0=form, 1=hist), title
             ("📦  Nota de Entrega", 0, 0, "📦  Nueva Nota de Entrega"),
             ("🖥️  Diagnósticos de PC", 1, 0, "🖥️  Nuevo Diagnóstico"),
             ("🛒  Ventas de Repuestos", 2, 0, "🛒  Nueva Venta de Repuestos"),
             ("💻  Venta de Equipos", 3, 0, "💻  Nueva Venta de Equipo"),
             ("📝  Notas Libres", 5, 0, "📝  Notas Libres"),
             ("👥  Clientes", 6, 0, "👥  Gestión de Clientes"),
-            ("📥  Recepción Cloud", 7, 0, "📥  Recepción desde la Nube"),
+            ("📥  Recepción Cloud", 7, 0, "📥  Recepción Cloud"),
         ]
         
         hist_items = [
@@ -179,15 +180,12 @@ class MainWindow(QMainWindow):
         ]
         
         self._nav_btns: list[QPushButton] = []
-        self._nav_funcs = []
-        self._nav_titles: list[str] = []
         
-        # Helper iterador
         def _build_btn(label, mod_idx, sub_view, title):
             btn = QPushButton(label)
             btn.setObjectName("nav_btn")
             btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            # Conectar
+            btn.setFixedHeight(45)
             btn.clicked.connect(lambda _, m=mod_idx, s=sub_view, t=title, i=len(self._nav_btns): self._navigate(i, m, s, t))
             lay.addWidget(btn)
             self._nav_btns.append(btn)
@@ -195,11 +193,9 @@ class MainWindow(QMainWindow):
         for btn_data in nav_items:
             _build_btn(*btn_data)
             
-        # Label separador Historial
         self.sec_lbl2 = QLabel("HISTORIALES")
         self.sec_lbl2.setStyleSheet(
-            "color: #A0A0A0; font-size: 10px; font-weight: bold; letter-spacing: 1.5px;"
-            "padding: 16px 20px 8px; background: transparent; border: none;"
+            "color: #484F58; font-size: 10px; font-weight: bold; letter-spacing: 2px; padding: 20px 25px 8px;"
         )
         lay.addWidget(self.sec_lbl2)
 
@@ -208,35 +204,31 @@ class MainWindow(QMainWindow):
 
         lay.addStretch()
 
-        lay.addStretch()
-
-        # ── Divider
-        div = QFrame()
-        div.setFrameShape(QFrame.Shape.HLine)
-        div.setStyleSheet("background: #323232; max-height: 1px; border: none;")
-        lay.addWidget(div)
-
-        # ── Version footer
-        self.ver = QLabel("Llanos Core  v2.0")
+        self.ver = QLabel("Llanos Core v2.2")
         self.ver.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.ver.setStyleSheet(
-            "color: #A0A0A0; font-size: 11px; padding: 16px; background: transparent; border: none;"
-        )
+        self.ver.setStyleSheet("color: #484F58; font-size: 11px; padding: 20px;")
         lay.addWidget(self.ver)
 
-        return self.sidebar
+        return sidebar
 
     def toggle_sidebar(self):
-        width = self.sidebar.width()
-        # Toggle between fully open (240px) and closed (68px)
-        new_width = 68 if width > 100 else 240
-        self.anim = QPropertyAnimation(self.sidebar, b"minimumWidth")
+        width = self.sidebar_container.width()
+        new_width = 0 if width > 0 else 270 
+        
+        # Ajustar márgenes durante la animación
+        if new_width == 270:
+            self.sidebar_lay.setContentsMargins(15, 15, 0, 15)
+        else:
+            # Usar un timer para quitar márgenes DESPUÉS de que cierre
+            QTimer.singleShot(300, lambda: self.sidebar_lay.setContentsMargins(0,0,0,0))
+
+        self.anim = QPropertyAnimation(self.sidebar_container, b"minimumWidth")
         self.anim.setDuration(300)
         self.anim.setStartValue(width)
         self.anim.setEndValue(new_width)
         self.anim.setEasingCurve(QEasingCurve.Type.InOutQuart)
         
-        self.anim2 = QPropertyAnimation(self.sidebar, b"maximumWidth")
+        self.anim2 = QPropertyAnimation(self.sidebar_container, b"maximumWidth")
         self.anim2.setDuration(300)
         self.anim2.setStartValue(width)
         self.anim2.setEndValue(new_width)
@@ -245,76 +237,30 @@ class MainWindow(QMainWindow):
         self.anim.start()
         self.anim2.start()
 
-        # Hide extra text when collapsed
-        if new_width == 68:
-            self.lbl_logo.setText("⚡")
-            self.lbl_logo.setStyleSheet("color: #10B981; font-size: 24px; margin-left:-2px; font-weight: bold; background: transparent; border: none;")
-            self.lbl_sub.hide()
-            self.sec_lbl1.hide()
-            self.sec_lbl2.hide()
-            self.sec_lbl3.hide()
-            self.ver.hide()
-            
-            # Cortar a solo emoji
-            for btn in self._nav_btns:
-                if not hasattr(btn, 'full_text'):
-                    btn.full_text = btn.text()
-                # Extrae el emoji (separando por el doble espacio)
-                btn.setText(btn.full_text.split("  ")[0])
-        else:
+        # Al abrir (new_width > 0), nos aseguramos de que todo el contenido esté visible y completo
+        if new_width > 0:
             self.lbl_logo.setText("⚡ LLANOS CORE")
-            self.lbl_logo.setStyleSheet("color: #10B981; font-size: 18px; font-weight: bold; letter-spacing: 1px; background: transparent; border: none;")
+            self.lbl_logo.setStyleSheet("color: #58A6FF; font-size: 18px; font-weight: bold; letter-spacing: 1px;")
             self.lbl_sub.show()
             self.sec_lbl1.show()
             self.sec_lbl2.show()
-            self.sec_lbl3.show()
             self.ver.show()
-            
-            # Restaurar texto
             for btn in self._nav_btns:
-                if hasattr(btn, 'full_text'):
-                    btn.setText(btn.full_text)
-
-    # ── NAVIGATION ────────────────────────────────────────────────────────────
+                if hasattr(btn, 'full_text'): btn.setText(btn.full_text)
+                btn.setToolTip("")
 
     def _navigate(self, btn_index: int, module_idx: int = 0, sub_view: int = 0, title: str = "📦  Nota de Entrega"):
-        # Cambiar widget principal en el stack general
         self.stack.setCurrentIndex(module_idx)
+        active_widget = self.stack.currentWidget()
         
-        # Obtener el widget activo
-        if module_idx == 0:
-            active_widget = self.widget_notas
-        elif module_idx == 1:
-            active_widget = self.widget_reportes
-        elif module_idx == 2:
-            active_widget = self.widget_ventas
-        elif module_idx == 3:
-            active_widget = self.widget_equipos
-        elif module_idx == 5:
-            active_widget = self.widget_libres
-        elif module_idx == 6:
-            active_widget = self.widget_clientes
-        elif module_idx == 7:
-            active_widget = self.widget_recepcion
-        else:
-            active_widget = self.widget_tasas
-        
-        # Configurar la subvista (0=Form, 1=History)
         if hasattr(active_widget, "show_form"):
-            if sub_view == 0:
-                active_widget.show_form()
-            else:
-                active_widget.show_history()
+            if sub_view == 0: active_widget.show_form()
+            else: active_widget.show_history()
 
         self.topbar_title.setText(title)
         
-        # Desactivar / activar los colores de los botones
         for i, btn in enumerate(self._nav_btns):
-            if i == btn_index:
-                btn.setObjectName("nav_btn_active")
-            else:
-                btn.setObjectName("nav_btn")
-            
-            # Forzar actualización de estilo
+            if i == btn_index: btn.setObjectName("nav_btn_active")
+            else: btn.setObjectName("nav_btn")
             btn.style().unpolish(btn)
             btn.style().polish(btn)

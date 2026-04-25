@@ -11,15 +11,13 @@ echo ========================================
 echo [1/3] Verificando librerias...
 python -m pip install requests --quiet
 
-:: 2. Ejecutar Sincronizacion
+:: 2. Sincronizar datos (Silencioso)
 echo [2/3] Sincronizando datos de la nube...
-python -c "import database; database.sincronizar_nube()"
+pythonw -c "import database; database.sincronizar_nube()"
 
-:: 3. Lanzar aplicacion
+:: 3. Lanzar aplicación (Sin ventana de comandos)
 echo [3/3] Abriendo interfaz principal...
-start /b python main.py
+start pythonw main.py
 
-echo ========================================
-echo        SISTEMA OPERATIVO
-echo ========================================
+:: Salir del CMD inmediatamente
 exit

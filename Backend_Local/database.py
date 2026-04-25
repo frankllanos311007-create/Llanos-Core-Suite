@@ -165,6 +165,9 @@ def init_db():
     ''')
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_clientes_ci ON clientes(ci)")
 
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_clientes_nombre ON clientes(nombre)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_cloud_nombre ON cloud_registrations(nombre)")
+
     # Tabla para registros automáticos desde la nube
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS cloud_registrations (
@@ -489,6 +492,27 @@ def save_or_update_cliente(ci, nombre, telefono):
             telefono = excluded.telefono
     ''', (ci, nombre, telefono))
     conn.commit()
+
+
+def get_cliente_by_name(nombre):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT ci, telefono FROM clientes WHERE nombre LIKE ? LIMIT 1", (f"%{nombre}%",))
+    row = cursor.fetchone()
+    conn.close()
+    if row:
+        return {'ci': row[0], 'telefono': row[1]}
+    return None
+
+
+def search_cloud_registration(nombre):
+    """Busca en los datos que llegaron por el link del cliente."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM cloud_registrations WHERE nombre LIKE ? LIMIT 1", (f"%{nombre}%",))
+    row = cursor.fetchone()
+    conn.close()
+    return dict(row) if row else None
 
 
 def get_cliente_by_ci(ci):
