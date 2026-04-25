@@ -37,6 +37,21 @@ def init_db():
             items_json  TEXT    DEFAULT '[]',
             total       REAL    DEFAULT 0.0,
             observaciones TEXT  DEFAULT '',
+            marca       TEXT    DEFAULT '',
+            modelo      TEXT    DEFAULT '',
+            serial      TEXT    DEFAULT '',
+            procesador  TEXT    DEFAULT '',
+            ram         TEXT    DEFAULT '',
+            almacenamiento TEXT DEFAULT '',
+            tarjeta_madre  TEXT    DEFAULT '',
+            fuente_poder   TEXT    DEFAULT '',
+            so             TEXT    DEFAULT '',
+            grafica        TEXT    DEFAULT '',
+            dvd            TEXT    DEFAULT '',
+            teclado        TEXT    DEFAULT '',
+            mouse          TEXT    DEFAULT '',
+            combo_cables   TEXT    DEFAULT '',
+            antena_wifi    TEXT    DEFAULT '',
             created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
@@ -72,6 +87,21 @@ def init_db():
             items_json  TEXT    DEFAULT '[]',
             total       REAL    DEFAULT 0.0,
             observaciones TEXT  DEFAULT '',
+            marca       TEXT    DEFAULT '',
+            modelo      TEXT    DEFAULT '',
+            serial      TEXT    DEFAULT '',
+            procesador  TEXT    DEFAULT '',
+            ram         TEXT    DEFAULT '',
+            almacenamiento TEXT DEFAULT '',
+            tarjeta_madre  TEXT    DEFAULT '',
+            fuente_poder   TEXT    DEFAULT '',
+            so             TEXT    DEFAULT '',
+            grafica        TEXT    DEFAULT '',
+            dvd            TEXT    DEFAULT '',
+            teclado        TEXT    DEFAULT '',
+            mouse          TEXT    DEFAULT '',
+            combo_cables   TEXT    DEFAULT '',
+            antena_wifi    TEXT    DEFAULT '',
             created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
@@ -150,8 +180,18 @@ def init_db():
         )
     """)
 
-    conn.commit()
+    # Migración: Añadir columnas si no existen (para bases de datos ya creadas)
+    for table in ["notas_entrega", "ventas_repuestos"]:
+        cols = [
+            "marca", "modelo", "serial", "procesador", "ram", "almacenamiento",
+            "tarjeta_madre", "fuente_poder", "so", "grafica", "dvd", "teclado",
+            "mouse", "combo_cables", "antena_wifi"
+        ]
+        for col in cols:
+            try: cursor.execute(f"ALTER TABLE {table} ADD COLUMN {col} TEXT DEFAULT ''")
+            except: pass
 
+    conn.commit()
     conn.close()
 
 
@@ -171,19 +211,23 @@ def save_nota(data: dict) -> int:
     cursor = conn.cursor()
     cursor.execute('''
         INSERT OR REPLACE INTO notas_entrega
-            (numero, fecha, hora, cliente, telefono, ci, items_json, total, observaciones)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            (numero, fecha, hora, cliente, telefono, ci, items_json, total, observaciones,
+             marca, modelo, serial, procesador, ram, almacenamiento, tarjeta_madre, 
+             fuente_poder, so, grafica, dvd, teclado, mouse, combo_cables, antena_wifi)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
     ''', (
         data['numero'], data['fecha'], data['hora'],
         data['cliente'], data['telefono'], data['ci'],
-        data['items_json'], data['total'], data['observaciones']
+        data['items_json'], data['total'], data['observaciones'],
+        data.get('marca',''), data.get('modelo',''), data.get('serial',''),
+        data.get('procesador',''), data.get('ram',''), data.get('almacenamiento',''),
+        data.get('tarjeta_madre',''), data.get('fuente_poder',''), data.get('so',''),
+        data.get('grafica',''), data.get('dvd',''), data.get('teclado',''),
+        data.get('mouse',''), data.get('combo_cables',''), data.get('antena_wifi','')
     ))
     row_id = cursor.lastrowid
     conn.commit()
-    
-    # Save client for autocomplete
     save_or_update_cliente(data.get('ci'), data.get('cliente'), data.get('telefono'))
-    
     conn.close()
     return row_id
 
@@ -247,9 +291,7 @@ def save_reporte(data: dict) -> int:
     ))
     row_id = cursor.lastrowid
     conn.commit()
-    
     save_or_update_cliente(data.get('ci'), data.get('cliente'), data.get('telefono'))
-    
     conn.close()
     return row_id
 
@@ -312,18 +354,23 @@ def save_venta(data: dict) -> int:
     cursor = conn.cursor()
     cursor.execute('''
         INSERT OR REPLACE INTO ventas_repuestos
-            (numero, fecha, hora, cliente, telefono, ci, items_json, total, observaciones)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            (numero, fecha, hora, cliente, telefono, ci, items_json, total, observaciones,
+             marca, modelo, serial, procesador, ram, almacenamiento, tarjeta_madre, 
+             fuente_poder, so, grafica, dvd, teclado, mouse, combo_cables, antena_wifi)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
     ''', (
         data['numero'], data['fecha'], data['hora'],
         data['cliente'], data['telefono'], data['ci'],
-        data['items_json'], data['total'], data['observaciones']
+        data['items_json'], data['total'], data['observaciones'],
+        data.get('marca',''), data.get('modelo',''), data.get('serial',''),
+        data.get('procesador',''), data.get('ram',''), data.get('almacenamiento',''),
+        data.get('tarjeta_madre',''), data.get('fuente_poder',''), data.get('so',''),
+        data.get('grafica',''), data.get('dvd',''), data.get('teclado',''),
+        data.get('mouse',''), data.get('combo_cables',''), data.get('antena_wifi','')
     ))
     row_id = cursor.lastrowid
     conn.commit()
-    
     save_or_update_cliente(data.get('ci'), data.get('cliente'), data.get('telefono'))
-    
     conn.close()
     return row_id
 
@@ -392,9 +439,7 @@ def save_venta_equipo(data: dict) -> int:
     ))
     row_id = cursor.lastrowid
     conn.commit()
-    
     save_or_update_cliente(data.get('ci'), data.get('cliente'), data.get('telefono'))
-    
     conn.close()
     return row_id
 
@@ -414,10 +459,10 @@ def get_all_ventas_equipos(search: str = ''):
     return rows
 
 
-def get_venta_equipo_by_id(venta_id: int):
+def get_venta_equipo_by_id(id_venta):
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute('SELECT * FROM ventas_equipos WHERE id = ?', (venta_id,))
+    cursor.execute('SELECT * FROM ventas_equipos WHERE id = ?', (id_venta,))
     row = cursor.fetchone()
     conn.close()
     return dict(row) if row else None
@@ -428,6 +473,7 @@ def delete_venta_equipo(id_venta):
     cursor = conn.cursor()
     cursor.execute("DELETE FROM ventas_equipos WHERE id = ?", (id_venta,))
     conn.commit()
+
 
 # ── CLIENTES LOGIC ────────────────────────────────────────────────────────
 
@@ -444,6 +490,7 @@ def save_or_update_cliente(ci, nombre, telefono):
     ''', (ci, nombre, telefono))
     conn.commit()
 
+
 def get_cliente_by_ci(ci):
     conn = get_connection()
     cursor = conn.cursor()
@@ -453,6 +500,7 @@ def get_cliente_by_ci(ci):
         return {'nombre': row[0], 'telefono': row[1]}
     return None
 
+
 def get_all_clientes():
     conn = get_connection()
     cursor = conn.cursor()
@@ -460,6 +508,8 @@ def get_all_clientes():
     rows = cursor.fetchall()
     conn.close()
     return rows
+
+
 def get_exchange_rate() -> float:
     try:
         conn = get_connection()
@@ -471,12 +521,14 @@ def get_exchange_rate() -> float:
     except:
         return 45.50
 
+
 def set_exchange_rate(rate: float):
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('exchange_rate', ?)", (str(rate),))
     conn.commit()
     conn.close()
+
 
 # ── CLOUD SYNC ────────────────────────────────────────────────────────────
 
@@ -496,55 +548,42 @@ def sincronizar_nube():
         nuevos = 0
         
         for fb_id, reg in data.items():
-            # Seguridad: Ignorar registros que no sean diccionarios o sean mensajes de error
             if not isinstance(reg, dict) or fb_id == "error":
                 continue
-
             try:
-                # 1. Insertar en tabla de clientes (evitando duplicados por CI)
                 ci = reg.get('ci') or reg.get('c')
                 nombre = reg.get('nombre') or reg.get('n')
                 telefono = reg.get('telefono') or reg.get('t')
-                
-                if not ci or not nombre:
-                    continue
-
+                if not ci or not nombre: continue
                 cursor.execute("""
                     INSERT OR REPLACE INTO clientes (ci, nombre, telefono) 
                     VALUES (?, ?, ?)
                 """, (ci, nombre, telefono))
-                
-                # 2. Insertar en tabla de cloud_registrations para historial detallado
                 equipo = reg.get('equipo') or reg.get('e')
                 serial = reg.get('serial') or reg.get('s')
                 falla = reg.get('falla') or reg.get('f')
                 fecha = reg.get('fecha') or reg.get('ts')
-
                 cursor.execute("""
                     INSERT OR IGNORE INTO cloud_registrations 
                     (id, nombre, telefono, ci, equipo, serial, falla, fecha)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 """, (fb_id, nombre, telefono, ci, equipo, serial, falla, fecha))
-                
-                # 3. Si se guardó localmente con éxito, borrar de Firebase
                 requests.delete(f"{FIREBASE_URL}/{fb_id}.json")
                 nuevos += 1
-                
             except Exception as e:
                 print(f"⚠️ Error procesando registro {fb_id}: {e}")
-        
         conn.commit()
         conn.close()
         print(f"✨ Sincronización exitosa: {nuevos} registros importados.")
         return nuevos
-        
     except Exception as e:
         print(f"❌ Error de conexión con Firebase: {e}")
         return 0
 
+
 def sync_cloud_registrations():
-    """Versión simplificada para compatibilidad con UI anterior."""
     return sincronizar_nube()
+
 
 def get_new_cloud_registrations():
     conn = get_connection()
@@ -553,6 +592,7 @@ def get_new_cloud_registrations():
     rows = [dict(row) for row in cursor.fetchall()]
     conn.close()
     return rows
+
 
 def mark_cloud_registration_read(reg_id):
     conn = get_connection()

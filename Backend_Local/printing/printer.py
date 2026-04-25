@@ -33,17 +33,14 @@ def get_printer_name() -> str:
     """Finds the XP-80C printer or uses default."""
     try:
         printers = win32print.EnumPrinters(win32print.PRINTER_ENUM_LOCAL)
-        # 1. Prefer explicitly XP-80C
         for p in printers:
             name = p[2]
             if "XP-80C" in name:
                 return name
-        # 2. Fallback to any POS or 58mm printer
         for p in printers:
             name = p[2]
             if "POS" in name.upper() or "XP-58" in name:
                 return name
-        # 3. Last fallback: default
         return win32print.GetDefaultPrinter()
     except Exception:
         return ""
@@ -55,13 +52,9 @@ def print_raw_text(text: str):
     if not printer_name:
         raise Exception("No se pudo detectar ninguna impresora instalada.")
 
-    # ESC/POS Commands
-    # Initialize: ESC @
-    # Cut paper: GS V 0
     init_cmd = b'\x1B\x40'
     cut_cmd = b'\x1D\x56\x00'
 
-    # Encode latin characters cleanly
     try:
         raw_bytes = text.encode('cp850', errors='replace')
     except Exception:
@@ -84,6 +77,43 @@ def print_raw_text(text: str):
 
 
 # ─── FORMATTERS ──────────────────────────────────────────────────────────────
+
+def _add_specs_to_lines(lines: list, data: dict):
+    """Helper to add technical specs to the lines list."""
+    marca = data.get('marca', '')
+    modelo = data.get('modelo', '')
+    serial = data.get('serial', '')
+    cpu = data.get('procesador', '')
+    ram = data.get('ram', '')
+    disco = data.get('almacenamiento', '')
+    mother = data.get('tarjeta_madre', '')
+    fuente = data.get('fuente_poder', '')
+    so = data.get('so', '')
+    gpu = data.get('grafica', '')
+    dvd = data.get('dvd', '')
+    teclado = data.get('teclado', '')
+    mouse = data.get('mouse', '')
+    cables = data.get('combo_cables', '')
+    wifi = data.get('antena_wifi', '')
+
+    if marca:  lines.append(f"MARCA:   {marca}")
+    if modelo: lines.append(f"MODELO:  {modelo}")
+    if serial: lines.append(f"SERIAL:  {serial}")
+    if cpu or ram or disco: lines.append(_line())
+    if cpu:    lines.append(f"CPU:     {cpu}")
+    if ram:    lines.append(f"RAM:     {ram}")
+    if disco:  lines.append(f"DISCO:   {disco}")
+    if mother or fuente or so: lines.append(_line())
+    if mother: lines.append(f"M.BOARD: {mother}")
+    if fuente: lines.append(f"FUENTE:  {fuente}")
+    if so:     lines.append(f"S.O.:    {so}")
+    if gpu or dvd or teclado or mouse or cables or wifi: lines.append(_line())
+    if gpu:     lines.append(f"GRAFICA: {gpu}")
+    if dvd:     lines.append(f"DVD:     {dvd}")
+    if teclado: lines.append(f"TECLADO: {teclado}")
+    if mouse:   lines.append(f"MOUSE:   {mouse}")
+    if cables:  lines.append(f"CABLES:  {cables}")
+    if wifi:    lines.append(f"WIFI:    {wifi}")
 
 def build_nota_text(data: dict) -> str:
     """Builds the plain-text layout for Nota de Entrega."""
@@ -108,70 +138,29 @@ def build_nota_text(data: dict) -> str:
     lines.append(cliente.upper())
     lines.append(f"TLF: {telefono}   CI: {ci}")
     lines.append(_thick_line())
-    lines.append("ARTICULOS ENTREGADOS")
+    lines.append(_center("ESPECIFICACIONES DEL EQUIPO"))
     lines.append(_line())
     
-    items = json.loads(data.get('items_json', '[]') or '[]')
-    total = data.get('total', 0.0)
-    total_items = 0
+    _add_specs_to_lines(lines, data)
     
-    # Header for items with prices
-    lines.append("CANT   DESCRIPCION          PRECIO    SUBTOTAL")
-    lines.append(_line())
-    
-    for i, item in enumerate(items):
-        desc_raw = item.get('descripcion', '').strip().upper()
-        if not desc_raw: continue
-        total_items += 1
-        
-        try:
-            cant = int(item.get('cantidad', 1))
-            precio = float(item.get('precio', 0.0))
-            sub = cant * precio
-        except ValueError:
-            cant = 0; precio = 0.0; sub = 0.0
-            
-        # Wrap description (20 chars width)
-        desc_lines = []
-        curr = ""
-        for w in desc_raw.split(' '):
-            if len(curr) + len(w) + 1 <= 20:
-                curr += (w + " ")
-            else:
-                desc_lines.append(curr.strip().ljust(20))
-                curr = w + " "
-        if curr: desc_lines.append(curr.strip().ljust(20))
-        if not desc_lines: desc_lines = ["".ljust(20)]
-
-        c_str = str(cant).ljust(4)
-        p_str = f"${precio:.2f}".rjust(9)
-        s_str = f"${sub:.2f}".rjust(10)
-        
-        # First line with all columns
-        lines.append(f"{c_str} {desc_lines[0]} {p_str} {s_str}")
-        # Other lines only description
-        for extra_desc in desc_lines[1:]:
-            lines.append(f"     {extra_desc}")
-        
     lines.append(_thick_line())
-    lines.append(_left_right("TOTAL ITEMS:", str(total_items)))
-    
-    total_str = f"${total:.2f}"
+    total_str = f"${data.get('total', 0.0):.2f}"
     lines.append(_left_right("TOTAL A PAGAR ($):", total_str).upper())
     lines.append(_thick_line())
     
-    lines.append("DIAGNOSTICO / NOTAS:")
-    words = obs.split(' ')
-    curr_line = ""
-    for w in words:
-        if len(curr_line) + len(w) + 1 <= WIDTH:
-            curr_line += (w + " ")
-        else:
-            if curr_line: lines.append(curr_line.strip())
-            curr_line = w + " "
-    if curr_line: lines.append(curr_line.strip())
+    if obs:
+        lines.append("DIAGNOSTICO / NOTAS:")
+        words = obs.split(' ')
+        curr_line = ""
+        for w in words:
+            if len(curr_line) + len(w) + 1 <= WIDTH:
+                curr_line += (w + " ")
+            else:
+                if curr_line: lines.append(curr_line.strip())
+                curr_line = w + " "
+        if curr_line: lines.append(curr_line.strip())
+        lines.append(_thick_line())
     
-    lines.append(_thick_line())
     lines.append("")
     lines.append("")
     lines.append(_center("_______________________"))
@@ -181,7 +170,6 @@ def build_nota_text(data: dict) -> str:
     lines.append(_line())
     lines.append(_center("Gracias por su preferencia!"))
     lines.append(_center(f"{num} - {fecha} {hora}"))
-    
     return '\n'.join(lines)
 
 
@@ -243,7 +231,6 @@ def build_reporte_text(data: dict) -> str:
     lines.append(_line())
     lines.append(_center("Gracias por confiar en nosotros!"))
     lines.append(_center(f"{num} - {fecha} {hora}"))
-    
     return '\n'.join(lines)
 
 
@@ -255,108 +242,11 @@ def build_venta_text(data: dict) -> str:
     cliente = data.get('cliente', '')[:WIDTH]
     telefono = data.get('telefono', '') or '—'
     ci = data.get('ci', '') or '—'
-    
-    items = data.get('items')
-    if items is None:
-        import json
-        items = json.loads(data.get('items_json', '[]') or '[]')
-        
-    total = data.get('total', 0.0)
-
-    lines = []
-    lines.append(_center("LLANOS CORE"))
-    lines.append(_center("VENTA DE REPUESTOS"))
-    lines.append(_thick_line())
-    lines.append(_center(f"FACTURA N: {num}"))
-    lines.append(_line())
-    lines.append(_left_right(f"FECHA: {fecha}", f"HORA: {hora}"))
-    lines.append(_line())
-    lines.append(f"CLIENTE:\n{cliente}")
-    lines.append(f"TLF: {telefono}    CI: {ci}")
-    lines.append(_thick_line())
-    lines.append("CANT   DESCRIPCION          PRECIO    SUBTOTAL")
-    lines.append(_line())
-    
-    # 6 cols para cant, 20 para desc, 10 precio, 10 subtotal = 46. Espacios = 48.
-    for item in items:
-        try:
-            cant = int(item.get('cantidad', 1))
-            precio = float(item.get('precio', 0.0))
-            sub = cant * precio
-        except ValueError:
-            cant = 0
-            precio = 0.0
-            sub = 0.0
-            
-        # Wrap description
-        desc_raw = item.get('descripcion', '').upper()
-        desc_lines = []
-        curr = ""
-        # 20 is the column width for description
-        for w in desc_raw.split(' '):
-            if len(curr) + len(w) + 1 <= 20:
-                curr += (w + " ")
-            else:
-                desc_lines.append(curr.strip().ljust(20))
-                curr = w + " "
-        if curr: desc_lines.append(curr.strip().ljust(20))
-        if not desc_lines: desc_lines = ["".ljust(20)]
-
-        c_str = str(cant).ljust(4)
-        p_str = f"${precio:.2f}".rjust(9)
-        s_str = f"${sub:.2f}".rjust(10)
-        
-        # First line with all columns
-        lines.append(f"{c_str} {desc_lines[0]} {p_str} {s_str}")
-        # Other lines only description
-        for extra_desc in desc_lines[1:]:
-            lines.append(f"     {extra_desc}")
-
-    lines.append(_thick_line())
-    
-    total_str = f"${total:.2f}"
-    lines.append(_left_right("TOTAL A PAGAR ($):", total_str).upper())
-    lines.append(_thick_line())
-    
-    lines.append("\n\n")
-    lines.append(_center("Gracias por su compra!"))
-    lines.append(_center(f"{num} - {fecha} {hora}"))
-
-    return '\n'.join(lines)
-
-
-def build_venta_equipo_text(data: dict) -> str:
-    """Builds the plain-text layout for Ventas de Equipos Completos."""
-    num = data.get('numero', '')
-    fecha = data.get('fecha', '')
-    hora = data.get('hora', '')
-    cliente = data.get('cliente', '')[:WIDTH]
-    telefono = data.get('telefono', '') or '—'
-    ci = data.get('ci', '') or '—'
-    
-    # Specs
-    marca = data.get('marca', '')
-    modelo = data.get('modelo', '')
-    serial = data.get('serial', '')
-    cpu = data.get('procesador', '')
-    ram = data.get('ram', '')
-    almacenamiento = data.get('almacenamiento', '')
-    mother = data.get('tarjeta_madre', '')
-    fuente = data.get('fuente_poder', '')
-    so = data.get('so', '')
-    gpu = data.get('grafica', '')
-    dvd = data.get('dvd', '')
-    teclado = data.get('teclado', '')
-    mouse = data.get('mouse', '')
-    cables = data.get('combo_cables', '')
-    wifi = data.get('antena_wifi', '')
-    
-    total = data.get('total', 0.0)
     obs = data.get('observaciones', '')
 
     lines = []
     lines.append(_center("LLANOS CORE"))
-    lines.append(_center("VENTA DE EQUIPO COMPLETO"))
+    lines.append(_center("VENTA DE REPUESTOS / EQUIPOS"))
     lines.append(_thick_line())
     lines.append(_center(f"FACTURA N: {num}"))
     lines.append(_line())
@@ -365,49 +255,27 @@ def build_venta_equipo_text(data: dict) -> str:
     lines.append(f"CLIENTE:\n{cliente}")
     lines.append(f"TLF: {telefono}    CI: {ci}")
     lines.append(_thick_line())
-    lines.append(_center("ESPECIFICACIONES DEL EQUIPO"))
+    lines.append(_center("DETALLES TECNICOS"))
     lines.append(_line())
-    lines.append(f"MARCA:  {marca}")
-    lines.append(f"MODELO: {modelo}")
-    lines.append(f"SERIAL: {serial}")
-    lines.append(_line())
-    lines.append(f"CPU:    {cpu}")
-    lines.append(f"RAM:    {ram}")
-    lines.append(f"DISCO:  {almacenamiento}")
-    lines.append(f"M.BOARD:{mother}")
-    lines.append(f"FUENTE: {fuente}")
-    lines.append(f"S.O.:   {so}")
-    if gpu:     lines.append(f"GRAFICA:{gpu}")
-    if dvd:     lines.append(f"DVD:    {dvd}")
-    if teclado: lines.append(f"TECLADO:{teclado}")
-    if mouse:   lines.append(f"MOUSE:  {mouse}")
-    if cables:  lines.append(f"CABLES: {cables}")
-    if wifi:    lines.append(f"WIFI:   {wifi}")
     
-    lines.append(_thick_line())
-    
-    total_str = f"${total:.2f}"
-    lines.append(_left_right("PRECIO DEL EQUIPO ($):", total_str).upper())
-    lines.append(_thick_line())
+    _add_specs_to_lines(lines, data)
 
+    lines.append(_thick_line())
+    total_str = f"${data.get('total', 0.0):.2f}"
+    lines.append(_left_right("TOTAL A PAGAR ($):", total_str).upper())
+    lines.append(_thick_line())
     
     if obs:
-        lines.append("")
-        lines.append("GARANTIA / CONDICIONES:")
-        words = obs.split()
-        curr_line = ""
-        for w in words:
-            if len(curr_line) + len(w) + 1 <= WIDTH:
-                curr_line += w + " "
-            else:
-                lines.append(curr_line.strip())
-                curr_line = w + " "
-        if curr_line: lines.append(curr_line.strip())
-        lines.append("")
-    
+        lines.append("OBSERVACIONES:")
+        lines.append(obs)
+        lines.append(_line())
+
     lines.append("\n\n")
     lines.append(_center("Gracias por su compra!"))
     lines.append(_center(f"{num} - {fecha} {hora}"))
-
     return '\n'.join(lines)
 
+
+def build_venta_equipo_text(data: dict) -> str:
+    """Alias for consistency, uses the same layout as nota but for equipment sale."""
+    return build_venta_text(data)
