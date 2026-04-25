@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Llanos Core - Cyber-Register</title>
-    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+    <title>Llanos Core - Registro Exitoso</title>
     <style>
         :root {
             --neon-emerald: #10b981;
@@ -24,57 +23,81 @@
             -webkit-backdrop-filter: blur(12px);
             border: 1px solid var(--border);
             border-radius: 20px;
-            padding: 30px;
-            width: 100%; max-width: 450px;
+            padding: 40px;
+            width: 100%; max-width: 500px;
             box-shadow: 0 0 30px rgba(16, 185, 129, 0.1);
+            text-align: center;
         }
-        h1 { color: var(--neon-emerald); text-align: center; text-transform: uppercase; letter-spacing: 2px; margin-top: 0; }
-        .input-group { margin-bottom: 15px; }
+        h1 { color: var(--neon-emerald); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; }
+        p { line-height: 1.6; color: #cbd5e1; font-size: 18px; }
+        
+        .input-group { margin-bottom: 15px; text-align: left; }
         label { display: block; font-size: 12px; color: var(--neon-emerald); margin-bottom: 5px; font-weight: bold; }
         input, textarea {
             width: 100%; background: rgba(0,0,0,0.3); border: 1px solid var(--border);
             border-radius: 8px; padding: 12px; color: white; outline: none; transition: 0.3s;
-            font-size: 16px;
+            font-size: 16px; box-sizing: border-box;
         }
         input:focus, textarea:focus { border-color: var(--neon-emerald); box-shadow: 0 0 10px var(--border); }
+        
         .btn-neon {
             width: 100%; background: transparent; border: 1px solid var(--neon-emerald);
             color: var(--neon-emerald); padding: 14px; border-radius: 8px; cursor: pointer;
             font-weight: bold; text-transform: uppercase; transition: 0.3s; font-size: 14px;
+            margin-top: 10px;
         }
         .btn-neon:hover { background: var(--neon-emerald); color: #000; box-shadow: 0 0 20px var(--neon-emerald); }
-        .btn-neon:disabled { opacity: 0.5; cursor: not-allowed; }
-        #result { display: none; text-align: center; }
-        #qrcode { margin: 20px auto; border: 8px solid white; border-radius: 12px; max-width: 200px; }
+        
+        .btn-wa {
+            background: #25d366; border-color: #25d366; color: white; margin-top: 25px;
+        }
+        .btn-wa:hover { background: #128c7e; color: white; box-shadow: 0 0 20px #25d366; }
+        
+        .success-icon {
+            font-size: 60px; color: var(--neon-emerald); margin-bottom: 20px;
+        }
     </style>
 </head>
 <body>
     <div class="glass-card" id="form-container">
         <h1>Llanos Core</h1>
+        <p style="font-size: 14px; margin-bottom: 25px;">Complete sus datos para agilizar su recepción técnica.</p>
+        
         <div class="input-group">
-            <label>CLIENTE / RAZÓN SOCIAL</label>
-            <input type="text" id="nombre" placeholder="Nombre completo" required>
+            <label>NOMBRE COMPLETO / RAZÓN SOCIAL</label>
+            <input type="text" id="nombre" placeholder="Ej: Juan Pérez" required>
         </div>
+        
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
             <div class="input-group"><label>CÉDULA / RIF</label><input type="text" id="ci" placeholder="V-12345678" required></div>
-            <div class="input-group"><label>TELÉFONO</label><input type="text" id="telefono" placeholder="0412..." required></div>
+            <div class="input-group"><label>TELÉFONO</label><input type="text" id="telefono" placeholder="04241234567" required></div>
         </div>
-        <div class="input-group"><label>EQUIPO / MARCA / MODELO</label><input type="text" id="equipo" placeholder="Ej: Laptop HP Pavilion" required></div>
-        <div class="input-group"><label>SERIAL</label><input type="text" id="serial" placeholder="Opcional"></div>
-        <div class="input-group"><label>FALLA / REQUERIMIENTO</label><textarea id="falla" rows="3" placeholder="Describe el problema..." required></textarea></div>
-        <button class="btn-neon" id="submit-btn" onclick="registrar()">Sincronizar con Técnico</button>
+        
+        <div class="input-group"><label>EQUIPO / MARCA / MODELO</label><input type="text" id="equipo" placeholder="Ej: Laptop Dell G15" required></div>
+        <div class="input-group"><label>SERIAL (SI LO POSEE)</label><input type="text" id="serial" placeholder="Opcional"></div>
+        <div class="input-group"><label>FALLA O REQUERIMIENTO</label><textarea id="falla" rows="3" placeholder="Ej: No enciende, pantalla azul..." required></textarea></div>
+        
+        <button class="btn-neon" id="submit-btn" onclick="registrar()">Enviar Registro al Sistema</button>
     </div>
 
-    <div class="glass-card" id="result">
-        <h2 style="color: var(--neon-emerald)">¡REGISTRO EXITOSO!</h2>
-        <p style="font-size: 14px; color: #94a3b8;">Tu solicitud ha sido enviada al sistema central.</p>
-        <canvas id="qrcode"></canvas>
-        <p style="font-size: 13px;">Muestra este código QR al ingresar al local.</p>
-        <button class="btn-neon" onclick="location.reload()">Nuevo Registro</button>
+    <div class="glass-card" id="result" style="display: none;">
+        <div class="success-icon">✓</div>
+        <h1>¡GRACIAS POR SU CONFIANZA!</h1>
+        <p>Sus datos han sido guardados profesionalmente en nuestra base de datos.</p>
+        <p style="font-size: 15px; color: #94a3b8;">Un técnico ha sido notificado y comenzará el diagnóstico de su equipo a la brevedad.</p>
+        
+        <button class="btn-neon btn-wa" id="wa-confirm-btn" onclick="confirmarWA()">
+            CONFIRMAR POR WHATSAPP
+        </button>
+        
+        <button class="btn-neon" style="border-color: #334155; color: #94a3b8; margin-top: 15px;" onclick="location.reload()">
+            NUEVO REGISTRO
+        </button>
     </div>
 
     <script>
         const FIREBASE_URL = "https://llanos-core-gestion-docmentos-default-rtdb.firebaseio.com/registros.json";
+        let lastData = null;
 
         async function registrar() {
             const btn = document.getElementById('submit-btn');
@@ -85,41 +108,50 @@
                 equipo: document.getElementById('equipo').value.trim(),
                 serial: document.getElementById('serial').value.trim() || 'S/N',
                 falla: document.getElementById('falla').value.trim(),
-                fecha: new Date().toLocaleString()
+                fecha: new Date().toLocaleString(),
+                status: 'nuevo'
             };
 
-            // Validación rigurosa
             if(!data.nombre || !data.ci || !data.telefono || !data.equipo || !data.falla) {
-                alert("⚠️ Por favor rellena todos los campos obligatorios.");
+                alert("⚠️ Por favor complete todos los campos obligatorios.");
                 return;
             }
 
             btn.disabled = true;
-            btn.innerText = "SINCRONIZANDO...";
+            btn.innerText = "PROCESANDO...";
 
             try {
-                const response = await fetch(FIREBASE_URL, {
+                await fetch(FIREBASE_URL, {
                     method: 'POST',
                     body: JSON.stringify(data),
                     headers: { 'Content-Type': 'application/json' }
                 });
-                const result = await response.json();
                 
-                if (result && result.name) {
-                    // Mostrar QR con el ID único de Firebase
-                    document.getElementById('form-container').style.display = 'none';
-                    document.getElementById('result').style.display = 'block';
-                    QRCode.toCanvas(document.getElementById('qrcode'), result.name, { width: 200 });
-                } else {
-                    throw new Error("No se recibió ID de confirmación");
-                }
+                lastData = data;
+                document.getElementById('form-container').style.display = 'none';
+                document.getElementById('result').style.display = 'block';
                 
             } catch (error) {
-                console.error(error);
-                alert("❌ Error de conexión. Revisa tu internet e intenta nuevamente.");
+                alert("❌ Error de conexión. Revisa tu internet e intenta de nuevo.");
                 btn.disabled = false;
-                btn.innerText = "Sincronizar con Técnico";
+                btn.innerText = "Enviar Registro al Sistema";
             }
+        }
+
+        function confirmarWA() {
+            if(!lastData) return;
+            
+            const numeroEmpresa = "584243576308"; // Tu número (ajustado de tu captura)
+            const msj = `Hola *Llanos Core*, acabo de registrar mi equipo:
+            
+📌 *Cliente:* ${lastData.nombre}
+💻 *Equipo:* ${lastData.equipo}
+🛠️ *Falla:* ${lastData.falla}
+
+Quedo a la espera de que el técnico inicie el diagnóstico. ¡Gracias!`;
+
+            const url = `https://api.whatsapp.com/send?phone=${numeroEmpresa}&text=${encodeURIComponent(msj)}`;
+            window.open(url, '_blank');
         }
     </script>
 </body>

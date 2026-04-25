@@ -496,20 +496,35 @@ def sincronizar_nube():
         nuevos = 0
         
         for fb_id, reg in data.items():
+            # Seguridad: Ignorar registros que no sean diccionarios o sean mensajes de error
+            if not isinstance(reg, dict) or fb_id == "error":
+                continue
+
             try:
                 # 1. Insertar en tabla de clientes (evitando duplicados por CI)
+                ci = reg.get('ci') or reg.get('c')
+                nombre = reg.get('nombre') or reg.get('n')
+                telefono = reg.get('telefono') or reg.get('t')
+                
+                if not ci or not nombre:
+                    continue
+
                 cursor.execute("""
                     INSERT OR REPLACE INTO clientes (ci, nombre, telefono) 
                     VALUES (?, ?, ?)
-                """, (reg.get('ci') or reg.get('c'), reg.get('nombre') or reg.get('n'), reg.get('telefono') or reg.get('t')))
+                """, (ci, nombre, telefono))
                 
                 # 2. Insertar en tabla de cloud_registrations para historial detallado
+                equipo = reg.get('equipo') or reg.get('e')
+                serial = reg.get('serial') or reg.get('s')
+                falla = reg.get('falla') or reg.get('f')
+                fecha = reg.get('fecha') or reg.get('ts')
+
                 cursor.execute("""
                     INSERT OR IGNORE INTO cloud_registrations 
                     (id, nombre, telefono, ci, equipo, serial, falla, fecha)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                """, (fb_id, reg.get('nombre') or reg.get('n'), reg.get('telefono') or reg.get('t'), reg.get('ci') or reg.get('c'), 
-                      reg.get('equipo') or reg.get('e'), reg.get('serial') or reg.get('s'), reg.get('falla') or reg.get('f'), reg.get('fecha') or reg.get('ts')))
+                """, (fb_id, nombre, telefono, ci, equipo, serial, falla, fecha))
                 
                 # 3. Si se guardó localmente con éxito, borrar de Firebase
                 requests.delete(f"{FIREBASE_URL}/{fb_id}.json")

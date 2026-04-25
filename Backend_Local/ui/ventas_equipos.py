@@ -139,11 +139,6 @@ class VentasEquiposWidget(QWidget):
         frm_cli.addRow("Teléfono:", self.txt_telefono)
         frm_cli.addRow("C.I.:",      self.txt_ci)
         
-        btn_self = QPushButton("⚡ Cargar Registro")
-        btn_self.setToolTip("Pegar código enviado por el cliente")
-        btn_self.setStyleSheet("color: #60a5fa; font-weight: bold; border: 1px dashed #3b82f6; padding: 6px; border-radius: 6px;")
-        btn_self.setCursor(Qt.CursorShape.PointingHandCursor)
-        btn_self.clicked.connect(self._import_from_self_code)
         
         btn_send_form = QPushButton("📲 Enviar Formulario")
         btn_send_form.setToolTip("Enviar link de registro al cliente por WhatsApp")
@@ -152,7 +147,6 @@ class VentasEquiposWidget(QWidget):
         btn_send_form.clicked.connect(self._send_registration_form)
         
         row_reg = QHBoxLayout()
-        row_reg.addWidget(btn_self)
         row_reg.addWidget(btn_send_form)
         lay_cli.addLayout(row_reg)
         
@@ -468,7 +462,7 @@ class VentasEquiposWidget(QWidget):
             f"Hola, le saluda *Llanos Core*. 👋\n\n"
             f"Para agilizar su recepción, por favor llene sus datos y los de su equipo en este link:\n"
             f"🔗 {FORM_URL}\n\n"
-            f"Al finalizar, envíenos el código que genera el sistema. ¡Gracias!"
+            f"Sus datos llegarán automáticamente a nuestro sistema. ¡Gracias!"
         )
         import urllib.parse
         url = f"https://api.whatsapp.com/send?phone={clean_phone}&text={urllib.parse.quote(msg)}"

@@ -11,6 +11,7 @@ from ui.ventas_equipos import VentasEquiposWidget
 from ui.tasas import TasasWidget
 from ui.notas_libres import NotasLibresWidget
 from ui.clientes import ClientesWidget
+from ui.recepcion import RecepcionWidget
 from ui.styles import SIDEBAR_STYLE, NAV_BTN_STYLE, NAV_BTN_ACTIVE_STYLE
 import database
 
@@ -48,6 +49,7 @@ class MainWindow(QMainWindow):
         self.widget_tasas = TasasWidget()
         self.widget_libres = NotasLibresWidget()
         self.widget_clientes = ClientesWidget()
+        self.widget_recepcion = RecepcionWidget()
         
         self.stack = QStackedWidget()
         self.stack.addWidget(self.widget_notas)     # index 0
@@ -57,6 +59,7 @@ class MainWindow(QMainWindow):
         self.stack.addWidget(self.widget_tasas)     # index 4
         self.stack.addWidget(self.widget_libres)    # index 5
         self.stack.addWidget(self.widget_clientes)  # index 6
+        self.stack.addWidget(self.widget_recepcion) # index 7
         right_lay.addWidget(self.stack, 1)
 
         root.addWidget(right, 1)
@@ -165,6 +168,7 @@ class MainWindow(QMainWindow):
             ("💻  Venta de Equipos", 3, 0, "💻  Nueva Venta de Equipo"),
             ("📝  Notas Libres", 5, 0, "📝  Notas Libres"),
             ("👥  Clientes", 6, 0, "👥  Gestión de Clientes"),
+            ("📥  Recepción Cloud", 7, 0, "📥  Recepción desde la Nube"),
         ]
         
         hist_items = [
@@ -290,6 +294,8 @@ class MainWindow(QMainWindow):
             active_widget = self.widget_libres
         elif module_idx == 6:
             active_widget = self.widget_clientes
+        elif module_idx == 7:
+            active_widget = self.widget_recepcion
         else:
             active_widget = self.widget_tasas
         
