@@ -15,7 +15,7 @@ from printing.printer import build_venta_equipo_text, print_raw_text
 from ui.selector_dialog import SelectorDialog
 
 # Cambia esto por la URL donde subas el auto_registro.html
-FORM_URL = "https://tu-usuario.github.io/tu-repo/auto_registro.html"
+FORM_URL = "https://llanos-core-registro.vercel.app"
 
 
 class VentasEquiposWidget(QWidget):
