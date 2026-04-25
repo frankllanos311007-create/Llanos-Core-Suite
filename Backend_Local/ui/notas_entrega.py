@@ -66,6 +66,15 @@ class NotasEntregaWidget(QWidget):
             card_lay.addWidget(lbl_title)
         return card, card_lay
 
+    def _add_field(self, lay, label, widget):
+        v_lay = QVBoxLayout()
+        v_lay.setSpacing(4)
+        lbl = QLabel(label)
+        lbl.setStyleSheet("color: #8B949E; font-size: 11px; font-weight: bold; margin-left: 2px;")
+        v_lay.addWidget(lbl)
+        v_lay.addWidget(widget)
+        lay.addLayout(v_lay)
+
     def _build_form(self) -> QScrollArea:
         container = QWidget()
         container.setObjectName("formContainer")
@@ -88,35 +97,22 @@ class NotasEntregaWidget(QWidget):
         title_row.addWidget(lbl)
         title_row.addStretch()
         btn_new = QPushButton("＋ Nueva")
-        btn_new.setFixedHeight(36)
-        btn_new.setFixedWidth(95)
-        btn_new.setCursor(Qt.CursorShape.PointingHandCursor)
-        btn_new.setToolTip("Limpiar y crear nueva nota")
+        btn_new.setFixedHeight(36); btn_new.setFixedWidth(95); btn_new.setCursor(Qt.CursorShape.PointingHandCursor)
         btn_new.clicked.connect(self._new_nota)
         title_row.addWidget(btn_new)
 
         btn_import = QPushButton("📥 Importar")
-        btn_import.setFixedHeight(36)
-        btn_import.setFixedWidth(100)
-        btn_import.setCursor(Qt.CursorShape.PointingHandCursor)
-        btn_import.setToolTip("Cargar datos de una nota ya hecha")
+        btn_import.setFixedHeight(36); btn_import.setFixedWidth(100); btn_import.setCursor(Qt.CursorShape.PointingHandCursor)
         btn_import.clicked.connect(self._import_from_existing)
         title_row.addWidget(btn_import)
-        
         lay.addLayout(title_row)
 
-        sep = QFrame()
-        sep.setFrameShape(QFrame.Shape.HLine)
-        sep.setStyleSheet("background:#30363D;max-height:1px;")
+        sep = QFrame(); sep.setFrameShape(QFrame.Shape.HLine); sep.setStyleSheet("background:#30363D;max-height:1px;")
         lay.addWidget(sep)
 
         # ── Document info
         grp_doc, lay_doc = self._create_card("Detalles")
-        frm_doc = QFormLayout()
-        lay_doc.addLayout(frm_doc)
-        frm_doc.setSpacing(10)
-        frm_doc.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
-
+        frm_doc = QFormLayout(); lay_doc.addLayout(frm_doc); frm_doc.setSpacing(10); frm_doc.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
         self.txt_numero = QLineEdit(); self.txt_numero.setReadOnly(True)
         self.txt_fecha  = QLineEdit(); self.txt_fecha.setReadOnly(True)
         self.txt_hora   = QLineEdit(); self.txt_hora.setReadOnly(True)
@@ -127,114 +123,92 @@ class NotasEntregaWidget(QWidget):
 
         # ── Client info
         grp_cli, lay_cli = self._create_card("Datos del Cliente")
-        row_cli = QHBoxLayout()
-        self.txt_cliente  = QLineEdit(); self.txt_cliente.setPlaceholderText("Nombre completo...")
+        row_cli = QHBoxLayout(); row_cli.setSpacing(12)
+        self.txt_cliente  = QLineEdit()
         self.txt_cliente.returnPressed.connect(self._lookup_client_by_name)
-        self.txt_telefono = QLineEdit(); self.txt_telefono.setPlaceholderText("Teléfono (Opcional)")
-        self.txt_ci       = QLineEdit(); self.txt_ci.setPlaceholderText("Ej: V-12.345.678")
+        self.txt_telefono = QLineEdit()
+        self.txt_ci       = QLineEdit()
         self.txt_ci.editingFinished.connect(self._lookup_client)
-        row_cli.addWidget(self.txt_cliente)
-        row_cli.addWidget(self.txt_telefono)
-        row_cli.addWidget(self.txt_ci)
-        lay_cli.addLayout(row_cli)
+        
+        self._add_field(row_cli, "NOMBRE DEL CLIENTE", self.txt_cliente)
+        self._add_field(row_cli, "TELÉFONO", self.txt_telefono)
+        self._add_field(row_cli, "CÉDULA / RIF", self.txt_ci)
         
         lay_cli.addLayout(row_cli)
         lay.addWidget(grp_cli)
 
-        # ── Especificaciones Técnicas (The user's requested block)
+        # ── Especificaciones Técnicas
         grp_specs, lay_specs = self._create_card("Especificaciones Técnicas del Equipo")
-        lay_specs.setSpacing(12)
+        lay_specs.setSpacing(15)
         
-        row_sp1 = QHBoxLayout()
-        self.txt_marca = QLineEdit(); self.txt_marca.setPlaceholderText("Marca (Ej. Dell, HP)")
-        self.txt_modelo = QLineEdit(); self.txt_modelo.setPlaceholderText("Modelo (Ej. Optiplex 3020)")
-        self.txt_serial = QLineEdit(); self.txt_serial.setPlaceholderText("Serial / Service Tag")
-        row_sp1.addWidget(self.txt_marca); row_sp1.addWidget(self.txt_modelo); row_sp1.addWidget(self.txt_serial)
+        row_sp1 = QHBoxLayout(); row_sp1.setSpacing(12)
+        self.txt_marca = QLineEdit(); self.txt_modelo = QLineEdit(); self.txt_serial = QLineEdit()
+        self._add_field(row_sp1, "MARCA", self.txt_marca)
+        self._add_field(row_sp1, "MODELO", self.txt_modelo)
+        self._add_field(row_sp1, "SERIAL / TAG", self.txt_serial)
         
-        row_sp2 = QHBoxLayout()
-        self.txt_cpu = QLineEdit(); self.txt_cpu.setPlaceholderText("Procesador (Ej. Core i5 4ta Gen)")
-        self.txt_ram = QLineEdit(); self.txt_ram.setPlaceholderText("Memoria RAM (Ej. 8GB DDR3)")
-        self.txt_disco = QLineEdit(); self.txt_disco.setPlaceholderText("Almacenamiento (Ej. 256GB SSD)")
-        row_sp2.addWidget(self.txt_cpu); row_sp2.addWidget(self.txt_ram); row_sp2.addWidget(self.txt_disco)
-
-        row_sp3 = QHBoxLayout()
-        self.txt_mother = QLineEdit(); self.txt_mother.setPlaceholderText("Placa Madre (Ej. ASUS H81M)")
-        self.txt_fuente = QLineEdit(); self.txt_fuente.setPlaceholderText("Fuente de Poder (Ej. 500W Cert.)")
-        self.txt_so = QLineEdit(); self.txt_so.setPlaceholderText("Sistema Operativo (Ej. Windows 11)")
-        row_sp3.addWidget(self.txt_mother); row_sp3.addWidget(self.txt_fuente); row_sp3.addWidget(self.txt_so)
-
-        row_sp4 = QHBoxLayout()
-        self.txt_gpu = QLineEdit(); self.txt_gpu.setPlaceholderText("Memoria Gráfica (Opcional)")
-        self.txt_dvd = QLineEdit(); self.txt_dvd.setPlaceholderText("Unidad DVD (Opcional)")
-        row_sp4.addWidget(self.txt_gpu); row_sp4.addWidget(self.txt_dvd)
-
-        row_sp5 = QHBoxLayout()
-        self.txt_teclado = QLineEdit(); self.txt_teclado.setPlaceholderText("Teclado (Opcional)")
-        self.txt_mouse = QLineEdit(); self.txt_mouse.setPlaceholderText("Mouse (Opcional)")
-        row_sp5.addWidget(self.txt_teclado); row_sp5.addWidget(self.txt_mouse)
-
-        row_sp6 = QHBoxLayout()
-        self.txt_cables = QLineEdit(); self.txt_cables.setPlaceholderText("Combo de Cables (Opcional)")
-        self.txt_wifi = QLineEdit(); self.txt_wifi.setPlaceholderText("Antena Wifi (Opcional)")
-        row_sp6.addWidget(self.txt_cables); row_sp6.addWidget(self.txt_wifi)
+        row_sp2 = QHBoxLayout(); row_sp2.setSpacing(12)
+        self.txt_cpu = QLineEdit(); self.txt_ram = QLineEdit(); self.txt_disco = QLineEdit()
+        self._add_field(row_sp2, "PROCESADOR", self.txt_cpu)
+        self._add_field(row_sp2, "MEMORIA RAM", self.txt_ram)
+        self._add_field(row_sp2, "DISCO DURO", self.txt_disco)
+ 
+        row_sp3 = QHBoxLayout(); row_sp3.setSpacing(12)
+        self.txt_mother = QLineEdit(); self.txt_fuente = QLineEdit(); self.txt_so = QLineEdit()
+        self._add_field(row_sp3, "PLACA MADRE", self.txt_mother)
+        self._add_field(row_sp3, "FUENTE PODER", self.txt_fuente)
+        self._add_field(row_sp3, "SISTEMA OPERATIVO", self.txt_so)
+ 
+        row_sp4 = QHBoxLayout(); row_sp4.setSpacing(12)
+        self.txt_gpu = QLineEdit(); self.txt_dvd = QLineEdit()
+        self._add_field(row_sp4, "GRÁFICA", self.txt_gpu)
+        self._add_field(row_sp4, "UNIDAD DVD", self.txt_dvd)
+ 
+        row_sp5 = QHBoxLayout(); row_sp5.setSpacing(12)
+        self.txt_teclado = QLineEdit(); self.txt_mouse = QLineEdit()
+        self._add_field(row_sp5, "TECLADO", self.txt_teclado)
+        self._add_field(row_sp5, "MOUSE", self.txt_mouse)
+ 
+        row_sp6 = QHBoxLayout(); row_sp6.setSpacing(12)
+        self.txt_cables = QLineEdit(); self.txt_wifi = QLineEdit()
+        self._add_field(row_sp6, "CABLES", self.txt_cables)
+        self._add_field(row_sp6, "ANTENA WIFI", self.txt_wifi)
         
         lay_specs.addLayout(row_sp1); lay_specs.addLayout(row_sp2); lay_specs.addLayout(row_sp3)
         lay_specs.addLayout(row_sp4); lay_specs.addLayout(row_sp5); lay_specs.addLayout(row_sp6)
         lay.addWidget(grp_specs)
-
+ 
         # ── Precio Directo
         grp_price, lay_price = self._create_card("Precio de Entrega")
         row_pr = QHBoxLayout()
-        lbl_p = QLabel("PRECIO TOTAL ($):")
-        lbl_p.setStyleSheet("color:#A0A0A0; font-size:16px; font-weight:bold;")
+        lbl_p = QLabel("PRECIO TOTAL ($):"); lbl_p.setStyleSheet("color:#8B949E; font-size:14px; font-weight:bold;")
         row_pr.addWidget(lbl_p)
-        
-        self.txt_total = QLineEdit()
-        self.txt_total.setPlaceholderText("0.00")
-        self.txt_total.setFixedWidth(150)
-        self.txt_total.setFixedHeight(40)
-        self.txt_total.setStyleSheet("color:#10B981; font-size:22px; font-weight:bold; background:#1e293b; border: 1px solid #334155; border-radius: 6px; padding: 0 10px;")
+        self.txt_total = QLineEdit(); self.txt_total.setPlaceholderText("0.00"); self.txt_total.setFixedWidth(150); self.txt_total.setFixedHeight(40)
+        self.txt_total.setStyleSheet("color:#10B981; font-size:22px; font-weight:bold; background:#161B22; border: 1px solid #30363D; border-radius: 6px; padding: 0 10px;")
         self.txt_total.setAlignment(Qt.AlignmentFlag.AlignRight)
-        row_pr.addWidget(self.txt_total)
-        row_pr.addStretch()
-        lay_price.addLayout(row_pr)
-        lay.addWidget(grp_price)
-
+        row_pr.addWidget(self.txt_total); row_pr.addStretch()
+        lay_price.addLayout(row_pr); lay.addWidget(grp_price)
+ 
         # ── Observaciones
         grp_obs, lay_obs = self._create_card("Observaciones / Diagnóstico")
-        self.txt_obs = QTextEdit()
-        self.txt_obs.setPlaceholderText("Notas adicionales, condiciones...")
-        self.txt_obs.setFixedHeight(80)
-        lay_obs.addWidget(self.txt_obs)
-        lay.addWidget(grp_obs)
-
+        self.txt_obs = QTextEdit(); self.txt_obs.setFixedHeight(80)
+        lay_obs.addWidget(self.txt_obs); lay.addWidget(grp_obs)
+ 
         # ── Action buttons
         grp_act, lay_act = self._create_card("")
-        lay_act.setSpacing(10)
-        row1 = QHBoxLayout()
-        self.btn_save = QPushButton("💾  Guardar"); self.btn_save.setObjectName("btn_success"); self.btn_save.setFixedHeight(44)
-        self.btn_save.setCursor(Qt.CursorShape.PointingHandCursor); self.btn_save.clicked.connect(self._save_nota)
+        lay_act.setSpacing(10); row1 = QHBoxLayout()
+        self.btn_save = QPushButton("💾  Guardar"); self.btn_save.setObjectName("btn_success"); self.btn_save.setFixedHeight(44); self.btn_save.setCursor(Qt.CursorShape.PointingHandCursor); self.btn_save.clicked.connect(self._save_nota)
         row1.addWidget(self.btn_save)
-        self.btn_preview = QPushButton("👁  Ver Ticket"); self.btn_preview.setObjectName("btn_info"); self.btn_preview.setFixedHeight(44)
-        self.btn_preview.setCursor(Qt.CursorShape.PointingHandCursor); self.btn_preview.clicked.connect(self._preview_thermal)
+        self.btn_preview = QPushButton("👁  Ver Ticket"); self.btn_preview.setObjectName("btn_info"); self.btn_preview.setFixedHeight(44); self.btn_preview.setCursor(Qt.CursorShape.PointingHandCursor); self.btn_preview.clicked.connect(self._preview_thermal)
         row1.addWidget(self.btn_preview)
-        self.btn_export = QPushButton("📄  Exportar"); self.btn_export.setObjectName("btn_info"); self.btn_export.setFixedHeight(44)
-        self.btn_export.setCursor(Qt.CursorShape.PointingHandCursor); self.btn_export.clicked.connect(self._export_pdf)
+        self.btn_export = QPushButton("📄  Exportar"); self.btn_export.setObjectName("btn_info"); self.btn_export.setFixedHeight(44); self.btn_export.setCursor(Qt.CursorShape.PointingHandCursor); self.btn_export.clicked.connect(self._export_pdf)
         row1.addWidget(self.btn_export)
-        self.btn_whatsapp = QPushButton("📲  WhatsApp"); self.btn_whatsapp.setObjectName("btn_success"); self.btn_whatsapp.setFixedHeight(44)
-        self.btn_whatsapp.setCursor(Qt.CursorShape.PointingHandCursor); self.btn_whatsapp.clicked.connect(self._send_whatsapp)
-        row1.addWidget(self.btn_whatsapp)
-        lay_act.addLayout(row1)
-
+        self.btn_whatsapp = QPushButton("📲  WhatsApp"); self.btn_whatsapp.setObjectName("btn_success"); self.btn_whatsapp.setFixedHeight(44); self.btn_whatsapp.setCursor(Qt.CursorShape.PointingHandCursor); self.btn_whatsapp.clicked.connect(self._send_whatsapp)
+        row1.addWidget(self.btn_whatsapp); lay_act.addLayout(row1)
         row2 = QHBoxLayout()
-        self.btn_print = QPushButton("🖨️  Imprimir"); self.btn_print.setObjectName("btn_primary"); self.btn_print.setFixedHeight(46)
-        self.btn_print.setCursor(Qt.CursorShape.PointingHandCursor); self.btn_print.clicked.connect(self._print_thermal)
-        row2.addWidget(self.btn_print)
-        lay_act.addLayout(row2)
-
-        lay.addWidget(grp_act)
-        lay.addStretch()
-
+        self.btn_print = QPushButton("🖨️  Imprimir"); self.btn_print.setObjectName("btn_primary"); self.btn_print.setFixedHeight(46); self.btn_print.setCursor(Qt.CursorShape.PointingHandCursor); self.btn_print.clicked.connect(self._print_thermal)
+        row2.addWidget(self.btn_print); lay_act.addLayout(row2)
+        lay.addWidget(grp_act); lay.addStretch()
         return scroll
 
     def _build_history(self) -> QWidget:
@@ -423,19 +397,4 @@ class NotasEntregaWidget(QWidget):
         import urllib.parse
         encoded_msg = urllib.parse.quote(msg)
         url = f"https://api.whatsapp.com/send?phone={clean_phone}&text={encoded_msg}"
-        QDesktopServices.openUrl(QUrl(url))
-
-    def _send_registration_form(self):
-        from PyQt6.QtWidgets import QInputDialog
-        phone = self.txt_telefono.text().strip()
-        if not phone:
-            phone, ok = QInputDialog.getText(self, "WhatsApp", "Número del cliente:")
-            if not ok or not phone: return
-        clean_phone = "".join(filter(str.isdigit, phone))
-        if len(clean_phone) == 10 and clean_phone.startswith('4'): clean_phone = "58" + clean_phone
-        elif len(clean_phone) == 11 and clean_phone.startswith('0'): clean_phone = "58" + clean_phone[1:]
-        msg = (f"Hola, le saluda *Llanos Core*. 👋\n\n"
-               f"Para agilizar su recepción, por favor llene sus datos aquí:\n🔗 {FORM_URL}\n\n¡Gracias!")
-        import urllib.parse
-        url = f"https://api.whatsapp.com/send?phone={clean_phone}&text={urllib.parse.quote(msg)}"
         QDesktopServices.openUrl(QUrl(url))

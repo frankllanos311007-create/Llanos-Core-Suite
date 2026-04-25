@@ -32,6 +32,16 @@ QLineEdit:focus, QTextEdit:focus, QComboBox:focus {
     background-color: #161B22;
 }
 
+/* ══ COMBOBOX DROPDOWN (Fix for visibility) ═════════════════════════════════ */
+QComboBox QAbstractItemView {
+    background-color: #0D1117;
+    color: #F0F6FC;
+    border: 1px solid #30363D;
+    selection-background-color: #161B22;
+    selection-color: #58A6FF;
+    outline: none;
+}
+
 QLineEdit[readOnly="true"] {
     background-color: #010409;
     color: #58A6FF;

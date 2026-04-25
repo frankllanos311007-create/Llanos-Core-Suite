@@ -54,19 +54,6 @@ class ReportesPCWidget(QWidget):
         self._refresh_history()
         self.main_stack.setCurrentIndex(1)
 
-    def _build_form(self) -> QScrollArea:
-        container = QWidget()
-        container.setObjectName("repFormContainer")
-        container.setStyleSheet(
-            "QWidget#repFormContainer { background-color: transparent; }"
-        )
-
-        scroll = QScrollArea()
-        scroll.setWidget(container)
-        scroll.setWidgetResizable(True)
-        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        scroll.setStyleSheet("QScrollArea { background: transparent; border: none; }")
-
     def _create_card(self, title: str) -> tuple[QFrame, QVBoxLayout]:
         card = QFrame()
         card.setObjectName("card")
@@ -78,6 +65,15 @@ class ReportesPCWidget(QWidget):
             lbl_title.setObjectName("card_title")
             card_lay.addWidget(lbl_title)
         return card, card_lay
+
+    def _add_field(self, lay, label, widget):
+        v_lay = QVBoxLayout()
+        v_lay.setSpacing(4)
+        lbl = QLabel(label)
+        lbl.setStyleSheet("color: #8B949E; font-size: 11px; font-weight: bold; margin-left: 2px;")
+        v_lay.addWidget(lbl)
+        v_lay.addWidget(widget)
+        lay.addLayout(v_lay)
 
     def _build_form(self) -> QScrollArea:
         container = QWidget()
@@ -101,35 +97,22 @@ class ReportesPCWidget(QWidget):
         title_row.addWidget(lbl)
         title_row.addStretch()
         btn_new = QPushButton("＋ Nuevo")
-        btn_new.setFixedHeight(36)
-        btn_new.setFixedWidth(95)
-        btn_new.setCursor(Qt.CursorShape.PointingHandCursor)
-        btn_new.setToolTip("Limpiar y crear nuevo reporte")
+        btn_new.setFixedHeight(36); btn_new.setFixedWidth(95); btn_new.setCursor(Qt.CursorShape.PointingHandCursor)
         btn_new.clicked.connect(self._new_reporte)
         title_row.addWidget(btn_new)
 
         btn_import = QPushButton("📥 Importar")
-        btn_import.setFixedHeight(36)
-        btn_import.setFixedWidth(100)
-        btn_import.setCursor(Qt.CursorShape.PointingHandCursor)
-        btn_import.setToolTip("Cargar datos de un diagnóstico ya hecho")
+        btn_import.setFixedHeight(36); btn_import.setFixedWidth(100); btn_import.setCursor(Qt.CursorShape.PointingHandCursor)
         btn_import.clicked.connect(self._import_from_existing)
         title_row.addWidget(btn_import)
-        
         lay.addLayout(title_row)
 
-        sep = QFrame()
-        sep.setFrameShape(QFrame.Shape.HLine)
-        sep.setStyleSheet("background:#30363D;max-height:1px;")
+        sep = QFrame(); sep.setFrameShape(QFrame.Shape.HLine); sep.setStyleSheet("background:#30363D;max-height:1px;")
         lay.addWidget(sep)
 
         # ── Document info
         grp_doc, lay_doc = self._create_card("Detalles")
-        frm_doc = QFormLayout()
-        lay_doc.addLayout(frm_doc)
-        frm_doc.setSpacing(10)
-        frm_doc.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
-
+        frm_doc = QFormLayout(); lay_doc.addLayout(frm_doc); frm_doc.setSpacing(10); frm_doc.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
         self.txt_numero = QLineEdit(); self.txt_numero.setReadOnly(True)
         self.txt_fecha  = QLineEdit(); self.txt_fecha.setReadOnly(True)
         self.txt_hora   = QLineEdit(); self.txt_hora.setReadOnly(True)
@@ -140,153 +123,86 @@ class ReportesPCWidget(QWidget):
 
         # ── Client info
         grp_cli, lay_cli = self._create_card("Datos del Cliente")
-        row_cli = QHBoxLayout()
-        self.txt_cliente  = QLineEdit(); self.txt_cliente.setPlaceholderText("Nombre completo...")
+        row_cli = QHBoxLayout(); row_cli.setSpacing(12)
+        self.txt_cliente  = QLineEdit()
         self.txt_cliente.returnPressed.connect(self._lookup_client_by_name)
-        self.txt_telefono = QLineEdit(); self.txt_telefono.setPlaceholderText("Teléfono (Opcional)")
-        self.txt_ci       = QLineEdit(); self.txt_ci.setPlaceholderText("Ej: V-12.345.678")
+        self.txt_telefono = QLineEdit()
+        self.txt_ci       = QLineEdit()
         self.txt_ci.editingFinished.connect(self._lookup_client)
-        row_cli.addWidget(self.txt_cliente)
-        row_cli.addWidget(self.txt_telefono)
-        row_cli.addWidget(self.txt_ci)
-        lay_cli.addLayout(row_cli)
         
+        self._add_field(row_cli, "NOMBRE DEL CLIENTE", self.txt_cliente)
+        self._add_field(row_cli, "TELÉFONO", self.txt_telefono)
+        self._add_field(row_cli, "CÉDULA / RIF", self.txt_ci)
+        lay_cli.addLayout(row_cli)
         lay.addWidget(grp_cli)
 
         # ── Equipment info
         grp_eq, lay_eq = self._create_card("Datos del Equipo")
-        row_eq = QHBoxLayout()
-        self.txt_marca  = QLineEdit(); self.txt_marca.setPlaceholderText("Marca (Ej. Dell, HP)")
-        self.txt_modelo = QLineEdit(); self.txt_modelo.setPlaceholderText("Modelo (Ej. Optiplex 3020)")
-        self.txt_serial = QLineEdit(); self.txt_serial.setPlaceholderText("Serial / Service Tag")
-        row_eq.addWidget(self.txt_marca)
-        row_eq.addWidget(self.txt_modelo)
-        row_eq.addWidget(self.txt_serial)
+        row_eq = QHBoxLayout(); row_eq.setSpacing(12)
+        self.txt_marca  = QLineEdit()
+        self.txt_modelo = QLineEdit()
+        self.txt_serial = QLineEdit()
+        
+        self._add_field(row_eq, "MARCA", self.txt_marca)
+        self._add_field(row_eq, "MODELO", self.txt_modelo)
+        self._add_field(row_eq, "SERIAL / TAG", self.txt_serial)
+        
         lay_eq.addLayout(row_eq)
         lay.addWidget(grp_eq)
 
         # ── Diagnóstico
         grp_diag, lay_diag = self._create_card("Diagnóstico")
-
         self.txt_diagnostico = QTextEdit()
-        self.txt_diagnostico.setPlaceholderText(
-            "Escribe aquí el diagnóstico técnico completo del equipo…\n\n"
-            "Ej: Se realizó diagnóstico completo. Se encontró falla en el disco "
-            "duro con sectores defectuosos. Se recomienda reemplazo del HDD y "
-            "reinstalación del sistema operativo."
-        )
         self.txt_diagnostico.setMinimumHeight(155)
         lay_diag.addWidget(self.txt_diagnostico)
         lay.addWidget(grp_diag)
 
         # ── Status & Cost
         grp_st, lay_st = self._create_card("Estado y Costo")
-        frm_st = QFormLayout()
-        lay_st.addLayout(frm_st)
-        frm_st.setSpacing(10)
-        frm_st.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
-
+        row_st = QHBoxLayout(); row_st.setSpacing(12)
         self.combo_estado = QComboBox()
         self.combo_estado.addItems(["En Revisión", "Listo", "Entregado"])
+        self.combo_estado.setFixedHeight(38)
         self.txt_costo = QLineEdit()
-        self.txt_costo.setPlaceholderText("Ej: $25.00 ó Bs. 100,00")
-        frm_st.addRow("Estado:", self.combo_estado)
-        frm_st.addRow("Costo:",  self.txt_costo)
+        
+        self._add_field(row_st, "ESTADO ACTUAL", self.combo_estado)
+        self._add_field(row_st, "COSTO ESTIMADO ($/Bs)", self.txt_costo)
+        
+        lay_st.addLayout(row_st)
         lay.addWidget(grp_st)
 
         # ── Action buttons
         grp_act, lay_act = self._create_card("")
-        lay_act.setSpacing(10)
-
-        row1 = QHBoxLayout()
-        self.btn_save = QPushButton("💾  Guardar")
-        self.btn_save.setObjectName("btn_success")
-        self.btn_save.setFixedHeight(44)
-        self.btn_save.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.btn_save.clicked.connect(self._save_reporte)
+        lay_act.setSpacing(10); row1 = QHBoxLayout()
+        self.btn_save = QPushButton("💾  Guardar"); self.btn_save.setObjectName("btn_success"); self.btn_save.setFixedHeight(44); self.btn_save.setCursor(Qt.CursorShape.PointingHandCursor); self.btn_save.clicked.connect(self._save_reporte)
         row1.addWidget(self.btn_save)
-
-        self.btn_preview = QPushButton("👁  Ver Ticket")
-        self.btn_preview.setObjectName("btn_info")
-        self.btn_preview.setFixedHeight(44)
-        self.btn_preview.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.btn_preview.clicked.connect(self._preview_thermal)
+        self.btn_preview = QPushButton("👁  Ver Ticket"); self.btn_preview.setObjectName("btn_info"); self.btn_preview.setFixedHeight(44); self.btn_preview.setCursor(Qt.CursorShape.PointingHandCursor); self.btn_preview.clicked.connect(self._preview_thermal)
         row1.addWidget(self.btn_preview)
-        
-        self.btn_export = QPushButton("📄  Exportar")
-        self.btn_export.setObjectName("btn_info")
-        self.btn_export.setFixedHeight(44)
-        self.btn_export.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.btn_export.clicked.connect(self._export_pdf)
+        self.btn_export = QPushButton("📄  Exportar"); self.btn_export.setObjectName("btn_info"); self.btn_export.setFixedHeight(44); self.btn_export.setCursor(Qt.CursorShape.PointingHandCursor); self.btn_export.clicked.connect(self._export_pdf)
         row1.addWidget(self.btn_export)
-        
-        self.btn_whatsapp = QPushButton("📲  WhatsApp")
-        self.btn_whatsapp.setObjectName("btn_success")
-        self.btn_whatsapp.setFixedHeight(44)
-        self.btn_whatsapp.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.btn_whatsapp.clicked.connect(self._send_whatsapp)
-        row1.addWidget(self.btn_whatsapp)
-        
-        lay_act.addLayout(row1)
-
+        self.btn_whatsapp = QPushButton("📲  WhatsApp"); self.btn_whatsapp.setObjectName("btn_success"); self.btn_whatsapp.setFixedHeight(44); self.btn_whatsapp.setCursor(Qt.CursorShape.PointingHandCursor); self.btn_whatsapp.clicked.connect(self._send_whatsapp)
+        row1.addWidget(self.btn_whatsapp); lay_act.addLayout(row1)
         row2 = QHBoxLayout()
-        self.btn_print = QPushButton("🖨️  Imprimir")
-        self.btn_print.setObjectName("btn_primary")
-        self.btn_print.setFixedHeight(46)
-        self.btn_print.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.btn_print.clicked.connect(self._print_thermal)
-        row2.addWidget(self.btn_print)
-        lay_act.addLayout(row2)
-
-        lay.addWidget(grp_act)
-        lay.addStretch()
-
+        self.btn_print = QPushButton("🖨️  Imprimir"); self.btn_print.setObjectName("btn_primary"); self.btn_print.setFixedHeight(46); self.btn_print.setCursor(Qt.CursorShape.PointingHandCursor); self.btn_print.clicked.connect(self._print_thermal)
+        row2.addWidget(self.btn_print); lay_act.addLayout(row2)
+        lay.addWidget(grp_act); lay.addStretch()
         return scroll
 
     def _build_history(self) -> QWidget:
-        container = QWidget()
-        container.setStyleSheet("background-color: transparent;")
-
-        lay = QVBoxLayout(container)
-        lay.setContentsMargins(22, 22, 22, 22)
-        lay.setSpacing(12)
-
+        container = QWidget(); container.setStyleSheet("background-color: transparent;")
+        lay = QVBoxLayout(container); lay.setContentsMargins(22, 22, 22, 22); lay.setSpacing(12)
         hdr = QHBoxLayout()
-        lbl = QLabel("📋  Historial de Reportes")
-        lbl.setStyleSheet("color:#e2e8f0;font-size:17px;font-weight:bold;")
-        hdr.addWidget(lbl)
-        hdr.addStretch()
-
-        self.search_rep = QLineEdit()
-        self.search_rep.setPlaceholderText("🔍 Buscar…")
-        self.search_rep.setFixedWidth(200)
-        self.search_rep.setFixedHeight(36)
+        lbl = QLabel("📋  Historial de Reportes"); lbl.setStyleSheet("color:#e2e8f0;font-size:17px;font-weight:bold;")
+        hdr.addWidget(lbl); hdr.addStretch()
+        self.search_rep = QLineEdit(); self.search_rep.setPlaceholderText("🔍 Buscar…"); self.search_rep.setFixedWidth(200); self.search_rep.setFixedHeight(36)
         self.search_rep.textChanged.connect(self.search_timer.start)
-        hdr.addWidget(self.search_rep)
-        lay.addLayout(hdr)
-
-        self.history_table = QTableWidget()
-        self.history_table.setColumnCount(6)
-        self.history_table.setHorizontalHeaderLabels(
-            ["N°", "Fecha", "Cliente", "Estado", "Ver/Impr.", "Elim."]
-        )
-        hh = self.history_table.horizontalHeader()
-        hh.setSectionResizeMode(0, QHeaderView.ResizeMode.Fixed)
-        hh.setSectionResizeMode(1, QHeaderView.ResizeMode.Fixed)
-        hh.setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
-        hh.setSectionResizeMode(3, QHeaderView.ResizeMode.Fixed)
-        hh.setSectionResizeMode(4, QHeaderView.ResizeMode.Fixed)
-        hh.setSectionResizeMode(5, QHeaderView.ResizeMode.Fixed)
-        self.history_table.setColumnWidth(0, 78)
-        self.history_table.setColumnWidth(1, 88)
-        self.history_table.setColumnWidth(3, 100)
-        self.history_table.setColumnWidth(4, 95)
-        self.history_table.setColumnWidth(5, 58)
-        self.history_table.verticalHeader().setVisible(False)
-        self.history_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
-        self.history_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        hdr.addWidget(self.search_rep); lay.addLayout(hdr)
+        self.history_table = QTableWidget(); self.history_table.setColumnCount(6)
+        self.history_table.setHorizontalHeaderLabels(["N°", "Fecha", "Cliente", "Estado", "Ver/Impr.", "Elim."])
+        hh = self.history_table.horizontalHeader(); hh.setSectionResizeMode(0, QHeaderView.ResizeMode.Fixed); hh.setSectionResizeMode(1, QHeaderView.ResizeMode.Fixed); hh.setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch); hh.setSectionResizeMode(3, QHeaderView.ResizeMode.Fixed); hh.setSectionResizeMode(4, QHeaderView.ResizeMode.Fixed); hh.setSectionResizeMode(5, QHeaderView.ResizeMode.Fixed)
+        self.history_table.setColumnWidth(0, 78); self.history_table.setColumnWidth(1, 88); self.history_table.setColumnWidth(3, 100); self.history_table.setColumnWidth(4, 95); self.history_table.setColumnWidth(5, 58)
+        self.history_table.verticalHeader().setVisible(False); self.history_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers); self.history_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         lay.addWidget(self.history_table)
-
         return container
 
     # ── FORM LOGIC ────────────────────────────────────────────────────────────
@@ -324,39 +240,10 @@ class ReportesPCWidget(QWidget):
         self.txt_serial.setText(data.get('serial', ''))
         self.txt_diagnostico.setPlainText(data.get('diagnostico', ''))
         self.txt_costo.setText(data.get('costo', ''))
-        
         index = self.combo_estado.findText(data.get('estado', ''), Qt.MatchFlag.MatchFixedString)
         if index >= 0: self.combo_estado.setCurrentIndex(index)
-        
         QMessageBox.information(self, "Datos Cargados", "Se han importado los datos del cliente y diagnóstico.")
-        self.btn_save.setText("💾  Guardar")
-        self.btn_save.setEnabled(True)
-
-    def _import_from_self_code(self):
-        from PyQt6.QtWidgets import QInputDialog
-        code, ok = QInputDialog.getMultiLineText(self, "Cargar Registro", "Pega el código generado por el cliente aquí:")
-        if not ok or not code: return
-        
-        try:
-            import base64
-            import json
-            decoded = base64.b64decode(code).decode('utf-8')
-            data = json.loads(decoded)
-            
-            # Map simplified keys
-            self.txt_cliente.setText(data.get('n', ''))
-            self.txt_telefono.setText(data.get('t', ''))
-            self.txt_ci.setText(data.get('c', ''))
-            
-            # We split the 'e' (equipo) if it contains brand/model
-            eq = data.get('e', '')
-            self.txt_marca.setText(eq) 
-            self.txt_serial.setText(data.get('s', ''))
-            self.txt_diagnostico.setPlainText(f"REPORTE DEL CLIENTE:\n{data.get('f', '')}")
-            
-            QMessageBox.information(self, "Carga Exitosa", "Se han cargado los datos del cliente y su equipo.")
-        except Exception as e:
-            QMessageBox.critical(self, "Error", "El código no es válido o está incompleto.")
+        self.btn_save.setText("💾  Guardar"); self.btn_save.setEnabled(True)
 
     def _lookup_client_by_name(self):
         nombre = self.txt_cliente.text().strip()
@@ -368,7 +255,7 @@ class ReportesPCWidget(QWidget):
             self.txt_ci.setText(cloud['ci'])
             self.txt_marca.setText(cloud.get('equipo', ''))
             self.txt_serial.setText(cloud.get('serial', ''))
-            self.txt_diag.setPlainText(f"FALLA REPORTADA POR CLIENTE: {cloud.get('falla', '')}")
+            self.txt_diagnostico.setPlainText(f"FALLA REPORTADA POR CLIENTE: {cloud.get('falla', '')}")
             return
         client = database.get_cliente_by_name(nombre)
         if client:
@@ -401,103 +288,51 @@ class ReportesPCWidget(QWidget):
 
     def _validate(self, data: dict) -> bool:
         if not data['cliente']:
-            QMessageBox.warning(self, "Campo requerido",
-                                "El nombre del cliente es obligatorio.")
-            self.txt_cliente.setFocus()
-            return False
+            QMessageBox.warning(self, "Campo requerido", "El nombre del cliente es obligatorio.")
+            self.txt_cliente.setFocus(); return False
         return True
-
-    # ── ACTIONS ───────────────────────────────────────────────────────────────
 
     def _save_reporte(self):
         data = self._collect_data()
-        if not self._validate(data):
-            return
-        if self._saved_id:
-            QMessageBox.information(self, "Ya guardado",
-                                    f"El reporte {data['numero']} ya está guardado.")
-            return
+        if not self._validate(data): return
+        if self._saved_id: return
         try:
             self._saved_id = database.save_reporte(data)
-            self.btn_save.setText("✅  Guardado")
-            self.btn_save.setEnabled(False)
-            self._refresh_history()
-        except Exception as e:
-            QMessageBox.critical(self, "Error al guardar", str(e))
+            self.btn_save.setText("✅  Guardado"); self.btn_save.setEnabled(False); self._refresh_history()
+        except Exception as e: QMessageBox.critical(self, "Error al guardar", str(e))
 
     def _preview_thermal(self):
         data = self._collect_data()
-        if not data['cliente']:
-            QMessageBox.warning(self, "Datos incompletos", "Completa al menos el nombre del cliente.")
-            return
-        text_content = build_reporte_text(data)
-        self._show_text_preview(text_content, f"Vista Previa — {data['numero']}")
+        if not data['cliente']: return
+        self._show_text_preview(build_reporte_text(data), f"Vista Previa — {data['numero']}")
 
     def _show_text_preview(self, text: str, title: str):
         from PyQt6.QtWidgets import QDialog, QTextEdit
-        dlg = QDialog(self)
-        dlg.setWindowTitle(title)
-        dlg.resize(420, 600)
-        lay = QVBoxLayout(dlg)
-        lay.setContentsMargins(0, 0, 0, 0)
-        t = QTextEdit()
-        t.setReadOnly(True)
-        t.setStyleSheet("background: white; color: black;")
-        font = QFont("Consolas", 10)
-        t.setFont(font)
-        t.setPlainText(text)
-        lay.addWidget(t)
-        dlg.exec()
+        dlg = QDialog(self); dlg.setWindowTitle(title); dlg.resize(420, 600)
+        lay = QVBoxLayout(dlg); lay.setContentsMargins(0, 0, 0, 0)
+        t = QTextEdit(); t.setReadOnly(True); t.setStyleSheet("background: white; color: black;"); t.setFont(QFont("Consolas", 10)); t.setPlainText(text)
+        lay.addWidget(t); dlg.exec()
 
     def _export_pdf(self):
         data = self._collect_data()
-        if not data['cliente']:
-            QMessageBox.warning(self, "Datos incompletos", "Completa al menos el nombre del cliente.")
-            return
-            
-        from PyQt6.QtWidgets import QFileDialog
-        from PyQt6.QtPrintSupport import QPrinter
-        from PyQt6.QtGui import QTextDocument, QPageSize, QPageLayout
-        from PyQt6.QtCore import QSizeF, QMarginsF
-        
-        path, _ = QFileDialog.getSaveFileName(
-            self, "Guardar como PDF", f"{data['numero']}_termica.pdf", "PDF (*.pdf)"
-        )
+        if not data['cliente']: return
+        from PyQt6.QtWidgets import QFileDialog; from PyQt6.QtPrintSupport import QPrinter; from PyQt6.QtGui import QTextDocument, QPageSize, QPageLayout; from PyQt6.QtCore import QSizeF, QMarginsF
+        path, _ = QFileDialog.getSaveFileName(self, "Guardar como PDF", f"{data['numero']}_termica.pdf", "PDF (*.pdf)")
         if path:
             text = build_reporte_text(data)
             html = f'<pre style="font-family: Consolas, monospace; font-size: 7.5pt; margin: 0; padding: 0;">{text}</pre>'
-            doc = QTextDocument()
-            doc.setHtml(html)
-            
-            printer = QPrinter(QPrinter.PrinterMode.HighResolution)
-            printer.setOutputFormat(QPrinter.OutputFormat.PdfFormat)
-            printer.setOutputFileName(path)
-            
+            doc = QTextDocument(); doc.setHtml(html)
+            printer = QPrinter(QPrinter.PrinterMode.HighResolution); printer.setOutputFormat(QPrinter.OutputFormat.PdfFormat); printer.setOutputFileName(path)
             page_size = QPageSize(QSizeF(80, 200), QPageSize.Unit.Millimeter)
-            printer.setPageSize(page_size)
-            printer.setPageMargins(QMarginsF(3, 3, 3, 3), QPageLayout.Unit.Millimeter)
-            
-            doc.print(printer)
-            QMessageBox.information(self, "PDF Exportado", f"Documento guardado en:\n{path}")
+            printer.setPageSize(page_size); printer.setPageMargins(QMarginsF(3, 3, 3, 3), QPageLayout.Unit.Millimeter)
+            doc.print(printer); QMessageBox.information(self, "PDF Exportado", f"Documento guardado en:\n{path}")
 
     def _print_thermal(self):
         data = self._collect_data()
-        if not self._validate(data):
-            return
-        if not self._saved_id:
-            reply = QMessageBox.question(
-                self, "Guardar antes de imprimir",
-                "El reporte aún no fue guardado. ¿Guardar ahora?",
-                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
-            )
-            if reply == QMessageBox.StandardButton.Yes:
-                self._save_reporte()
-                
-        try:
-            print_raw_text(build_reporte_text(data))
-            QMessageBox.information(self, "Impresión Exitosa", "Ticket enviado a la impresora correctamente.")
-        except Exception as e:
-            QMessageBox.critical(self, "Error de Impresión", str(e))
+        if not self._validate(data): return
+        if not self._saved_id: self._save_reporte()
+        try: print_raw_text(build_reporte_text(data)); QMessageBox.information(self, "Impresión Exitosa", "Ticket enviado.")
+        except Exception as e: QMessageBox.critical(self, "Error de Impresión", str(e))
 
     def _send_whatsapp(self):
         data = self._collect_data()
@@ -505,127 +340,39 @@ class ReportesPCWidget(QWidget):
         if not phone:
             QMessageBox.warning(self, "Falta Teléfono", "Por favor ingresa el número del cliente.")
             return
-        
-        # Clean phone number
         clean_phone = "".join(filter(str.isdigit, phone))
-        if len(clean_phone) == 10 and clean_phone.startswith('4'): # Ej: 412... -> 58412...
-            clean_phone = "58" + clean_phone
-        elif len(clean_phone) == 11 and clean_phone.startswith('0'): # Ej: 0412... -> 58412...
-            clean_phone = "58" + clean_phone[1:]
-        
-        # Format message
-        msg = (
-            f"Hola *{data['cliente']}*, le saluda *Llanos Core*. 👋\n\n"
-            f"Le informamos que su equipo (Reporte *{data['numero']}*) ya se encuentra **{data['estado']}**.\n"
-            f"Costo del servicio: *{data['costo']}*.\n\n"
-            f"Puede pasar a retirarlo en nuestro horario habitual. ¡Feliz día!"
-        )
-        
+        if len(clean_phone) == 10 and clean_phone.startswith('4'): clean_phone = "58" + clean_phone
+        elif len(clean_phone) == 11 and clean_phone.startswith('0'): clean_phone = "58" + clean_phone[1:]
+        msg = (f"Hola *{data['cliente']}*, le saluda *Llanos Core*. 👋\n\n"
+               f"Le informamos que su equipo (Reporte *{data['numero']}*) ya se encuentra **{data['estado']}**.\n"
+               f"Costo del servicio: *{data['costo']}*.\n\n¡Feliz día!")
         import urllib.parse
         encoded_msg = urllib.parse.quote(msg)
         url = f"https://api.whatsapp.com/send?phone={clean_phone}&text={encoded_msg}"
         QDesktopServices.openUrl(QUrl(url))
 
-    def _send_registration_form(self):
-        # Open a small dialog to ask for the phone number if not present
-        from PyQt6.QtWidgets import QInputDialog
-        phone = self.txt_telefono.text().strip()
-        if not phone:
-            phone, ok = QInputDialog.getText(self, "WhatsApp", "Número del cliente:")
-            if not ok or not phone: return
-        
-        clean_phone = "".join(filter(str.isdigit, phone))
-        if len(clean_phone) == 10 and clean_phone.startswith('4'): clean_phone = "58" + clean_phone
-        elif len(clean_phone) == 11 and clean_phone.startswith('0'): clean_phone = "58" + clean_phone[1:]
-        
-        msg = (
-            f"Hola, le saluda *Llanos Core*. 👋\n\n"
-            f"Para agilizar su recepción, por favor llene sus datos y los de su equipo en este link:\n"
-            f"🔗 {FORM_URL}\n\n"
-            f"Sus datos llegarán automáticamente a nuestro sistema. ¡Gracias!"
-        )
-        import urllib.parse
-        url = f"https://api.whatsapp.com/send?phone={clean_phone}&text={urllib.parse.quote(msg)}"
-        QDesktopServices.openUrl(QUrl(url))
-
-
-    # ── HISTORY ───────────────────────────────────────────────────────────────
-
     def _refresh_history(self):
         query = self.search_rep.text() if hasattr(self, 'search_rep') else ''
         reportes = database.get_all_reportes(query)
         self.history_table.setRowCount(len(reportes))
-
-        estado_colors = {
-            'En Revisión': '#fbbf24', # Amarillo ámbar brillante
-            'Listo':       '#34d399', # Verde esmeralda brillante
-            'Entregado':   '#60a5fa', # Azul cielo brillante
-        }
-
+        estado_colors = {'En Revisión': '#fbbf24', 'Listo': '#34d399', 'Entregado': '#60a5fa'}
         for row, rep in enumerate(reportes):
-            n = QTableWidgetItem(rep['numero'])
-            n.setForeground(QColor("#10B981"))
-            n.setFont(QFont("Segoe UI", 10, QFont.Weight.Bold))
-            self.history_table.setItem(row, 0, n)
-
-            f = QTableWidgetItem(rep['fecha'])
-            f.setForeground(QColor("#cbd5e1")) # Gris azulado claro brillante
-            self.history_table.setItem(row, 1, f)
-
+            n = QTableWidgetItem(rep['numero']); n.setForeground(QColor("#10B981")); n.setFont(QFont("Segoe UI", 10, QFont.Weight.Bold)); self.history_table.setItem(row, 0, n)
+            f = QTableWidgetItem(rep['fecha']); f.setForeground(QColor("#cbd5e1")); self.history_table.setItem(row, 1, f)
             self.history_table.setItem(row, 2, QTableWidgetItem(rep['cliente']))
-
             estado = rep.get('estado', 'En Revisión')
-            e = QTableWidgetItem(estado)
-            e.setForeground(QColor(estado_colors.get(estado, '#64748b')))
-            e.setFont(QFont("Segoe UI", 10, QFont.Weight.Bold))
-            self.history_table.setItem(row, 3, e)
-
-            btn_ver = QPushButton("👁  Ver")
-            btn_ver.setStyleSheet(
-                "QPushButton{background:#2563eb;color:white;border-radius:6px;"
-                "padding:5px 10px;font-size:11px;font-weight:600;}"
-                "QPushButton:hover{background:#3b82f6;}"
-            )
-            btn_ver.setCursor(Qt.CursorShape.PointingHandCursor)
-            btn_ver.clicked.connect(
-                lambda _, r=rep: self._show_text_preview(
-                    build_reporte_text(r),
-                    f"Reporte {r['numero']} — {r['cliente']}"
-                )
-            )
+            e = QTableWidgetItem(estado); e.setForeground(QColor(estado_colors.get(estado, '#64748b'))); e.setFont(QFont("Segoe UI", 10, QFont.Weight.Bold)); self.history_table.setItem(row, 3, e)
+            btn_ver = QPushButton("👁  Ver"); btn_ver.setStyleSheet("QPushButton{background:#2563eb;color:white;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:600;} QPushButton:hover{background:#3b82f6;}")
+            btn_ver.clicked.connect(lambda _, r=rep: self._show_text_preview(build_reporte_text(r), f"Reporte {r['numero']} — {r['cliente']}"))
             self.history_table.setCellWidget(row, 4, self._wrap(btn_ver))
-
-            btn_el = QPushButton("🗑")
-            btn_el.setStyleSheet(
-                "QPushButton{background:#dc2626;color:white;border-radius:6px;"
-                "padding:5px 8px;font-size:13px;}"
-                "QPushButton:hover{background:#ef4444;}"
-            )
-            btn_el.setCursor(Qt.CursorShape.PointingHandCursor)
-            btn_el.clicked.connect(
-                lambda _, rid=rep['id'], num=rep['numero']: self._delete(rid, num)
-            )
-            self.history_table.setCellWidget(row, 5, self._wrap(btn_el))
-
-            self.history_table.setRowHeight(row, 44)
+            btn_el = QPushButton("🗑"); btn_el.setStyleSheet("QPushButton{background:#dc2626;color:white;border-radius:6px;padding:5px 8px;font-size:13px;} QPushButton:hover{background:#ef4444;}")
+            btn_el.clicked.connect(lambda _, rid=rep['id'], num=rep['numero']: self._delete(rid, num))
+            self.history_table.setCellWidget(row, 5, self._wrap(btn_el)); self.history_table.setRowHeight(row, 44)
 
     @staticmethod
     def _wrap(btn: QPushButton) -> QWidget:
-        w = QWidget()
-        w.setStyleSheet("background:transparent;")
-        h = QHBoxLayout(w)
-        h.setContentsMargins(5, 4, 5, 4)
-        h.addWidget(btn)
-        return w
-
+        w = QWidget(); w.setStyleSheet("background:transparent;"); h = QHBoxLayout(w); h.setContentsMargins(5, 4, 5, 4); h.addWidget(btn); return w
     def _delete(self, rep_id: int, numero: str):
-        reply = QMessageBox.question(
-            self, "Confirmar",
-            f"¿Eliminar el reporte {numero}?\nEsta acción no se puede deshacer.",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
-        )
-        if reply == QMessageBox.StandardButton.Yes:
-            database.delete_reporte(rep_id)
-            self._refresh_history()
-            if self._saved_id == rep_id:
-                self._new_reporte()
+        if QMessageBox.question(self, "Confirmar", f"¿Eliminar el reporte {numero}?") == QMessageBox.StandardButton.Yes:
+            database.delete_reporte(rep_id); self._refresh_history()
+            if self._saved_id == rep_id: self._new_reporte()
