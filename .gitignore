@@ -17,4 +17,4 @@ coverage.xml
 *.db-shm
 .vscode/
 scratch/
-Llanos_Core_Suite/Backend_Local/llanos_core.db
+Backend_Local/llanos_core.db
