@@ -51,12 +51,12 @@ class DetalleRegistroDialog(QDialog):
             h_lay.addWidget(lbl_val, 1)
             info_lay.addWidget(container)
             
-        add_field("CLIENTE", data['nombre'])
-        add_field("CÉDULA", data['ci'])
-        add_field("TELÉFONO", data['telefono'])
-        add_field("FECHA", data['fecha'])
-        add_field("EQUIPO", data['equipo'])
-        add_field("SERIAL", data.get('serial', 'No especificado'))
+        add_field("CLIENTE", data.get('nombre', 'N/A'))
+        add_field("CÉDULA", data.get('ci', 'N/A'))
+        add_field("TELÉFONO", data.get('telefono', 'N/A'))
+        add_field("FECHA", data.get('fecha', 'N/A'))
+        add_field("EQUIPO", data.get('equipo', 'N/A'))
+        add_field("SERIAL", data.get('serial', 'S/N'))
         
         lay.addWidget(info_frame)
         
@@ -67,7 +67,8 @@ class DetalleRegistroDialog(QDialog):
         
         self.txt_falla = QTextEdit()
         self.txt_falla.setReadOnly(True)
-        self.txt_falla.setPlainText(data['falla'])
+        falla_det = data.get('falla') or "Sin descripción técnica proporcionada."
+        self.txt_falla.setPlainText(falla_det)
         self.txt_falla.setStyleSheet("""
             QTextEdit {
                 background-color: #0D1117; 
@@ -161,8 +162,10 @@ class RecepcionWidget(QWidget):
             c_item = QTableWidgetItem(reg['ci'])
             e_item = QTableWidgetItem(reg['equipo'])
             
-            falla_txt = reg['falla']
-            if len(falla_txt) > 50: falla_txt = falla_txt[:47] + "..."
+            falla_txt = reg.get('falla') or "Sin descripción"
+            if len(falla_txt) > 50: 
+                falla_txt = falla_txt[:47] + "..."
+            
             fa_item = QTableWidgetItem(falla_txt)
             fa_item.setForeground(Qt.GlobalColor.gray)
             

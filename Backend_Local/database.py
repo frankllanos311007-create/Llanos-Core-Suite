@@ -575,23 +575,40 @@ def sincronizar_nube():
             if not isinstance(reg, dict) or fb_id == "error":
                 continue
             try:
+                # Mapeo flexible para campos viejos y nuevos
                 ci = reg.get('ci') or reg.get('c')
                 nombre = reg.get('nombre') or reg.get('n')
-                telefono = reg.get('telefono') or reg.get('t')
+                telefono = reg.get('telefono') or reg.get('t') or reg.get('tel')
+                
                 if not ci or not nombre: continue
+
+                # Manejo de equipo (Nuevo: marca + modelo | Viejo: equipo)
+                marca = reg.get('marca', '')
+                modelo = reg.get('modelo', '')
+                equipo_web = reg.get('equipo') or reg.get('e')
+                
+                if marca or modelo:
+                    equipo_final = f"{marca} {modelo}".strip()
+                else:
+                    equipo_final = equipo_web or "Equipo Genérico"
+
+                serial = reg.get('serial') or reg.get('s') or "S/N"
+                
+                # Falla (Nuevo: info | Viejo: falla)
+                falla = reg.get('info') or reg.get('falla') or reg.get('f') or "Sin descripción técnica"
+                
+                fecha = reg.get('fecha') or reg.get('ts') or datetime.now().strftime("%d/%m/%Y %H:%M")
+
                 cursor.execute("""
                     INSERT OR REPLACE INTO clientes (ci, nombre, telefono) 
                     VALUES (?, ?, ?)
                 """, (ci, nombre, telefono))
-                equipo = reg.get('equipo') or reg.get('e')
-                serial = reg.get('serial') or reg.get('s')
-                falla = reg.get('falla') or reg.get('f')
-                fecha = reg.get('fecha') or reg.get('ts')
+
                 cursor.execute("""
                     INSERT OR IGNORE INTO cloud_registrations 
                     (id, nombre, telefono, ci, equipo, serial, falla, fecha)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                """, (fb_id, nombre, telefono, ci, equipo, serial, falla, fecha))
+                """, (fb_id, nombre, telefono, ci, equipo_final, serial, falla, fecha))
                 requests.delete(f"{FIREBASE_URL}/{fb_id}.json")
                 nuevos += 1
             except Exception as e:
