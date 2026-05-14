@@ -10,13 +10,13 @@
   "lang": "es",
   "icons": [
     {
-      "src": "Gemini_Generated_Image_qamunwqamunwqamu.png",
+      "src": "app-icon.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "Gemini_Generated_Image_qamunwqamunwqamu.png",
+      "src": "app-icon.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
