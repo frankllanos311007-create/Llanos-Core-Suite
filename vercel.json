@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/",
+      "destination": "/Frontend_Web/index.html"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/Frontend_Web/$1"
+    }
+  ]
+}
